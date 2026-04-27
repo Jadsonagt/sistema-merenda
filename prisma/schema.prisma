@@ -1,0 +1,229 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------------------
+// ENUMS
+// -------------------------------------------------------------
+
+enum TipoRefeicao {
+  DESJEJUM
+  MERENDA
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  SUPERVISORA
+}
+
+enum MovimentacaoType {
+  IN
+  OUT
+  TRANSFER
+  ADJUSTMENT
+  CONSUMPTION
+}
+
+enum PlanejamentoStatus {
+  DRAFT
+  FROZEN
+}
+
+// -------------------------------------------------------------
+// MODELS
+// -------------------------------------------------------------
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String   @unique
+  senha     String
+  role              Role     @default(SUPERVISORA)
+  rotaId            String?
+  rota              Rota?    @relation(fields: [rotaId], references: [id])
+  resetToken        String?
+  resetTokenExpires DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("usuarios")
+}
+
+model Rota {
+  id        String   @id @default(uuid())
+  name      String
+  usuarios  Usuario[]
+  escolas   Escola[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("rotas")
+}
+
+model Escola {
+  id                   String               @id @default(uuid())
+  name                 String
+  type                 String // e.g., Integral, Parcial
+  rotaId               String
+  rota                 Rota                 @relation(fields: [rotaId], references: [id])
+  estoques             EstoqueAtual[]
+  planejamentosMensais PlanejamentoMensal[]
+  movimentacoes        Movimentacao[]
+  metasPreparo         MetaPreparo[]
+  consumosFixos        ConsumoFixo[]
+  preparos             PreparoEscola[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@map("escolas")
+}
+
+model Item {
+  id                   String                @id @default(uuid())
+  name                 String
+  baseUnit             String // e.g., Kg, Litro, Unidade
+  packagingSize        Float // e.g., 5 (for a 5 Kg package)
+  estoques             EstoqueAtual[]
+  movimentacoes        Movimentacao[]
+  consumosFixos        ConsumoFixo[]
+  preparoIngredientes  PreparoIngrediente[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
+  @@map("itens")
+}
+
+model FichaTecnica {
+  id            String               @id @default(uuid())
+  name          String
+  type          String // e.g., Bolo, Cafe da manha
+  planejamentos PlanejamentoMensal[]
+  metasPreparo  MetaPreparo[]
+  cardapios     Cardapio[]
+  preparos      PreparoEscola[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@map("fichas_tecnicas")
+}
+
+model PreparoEscola {
+  id             String              @id @default(uuid())
+  escolaId       String
+  escola         Escola              @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  fichaTecnicaId String
+  fichaTecnica   FichaTecnica        @relation(fields: [fichaTecnicaId], references: [id], onDelete: Cascade)
+  ingredientes   PreparoIngrediente[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([escolaId, fichaTecnicaId])
+  @@map("preparos_escola")
+}
+
+model PreparoIngrediente {
+  id              String        @id @default(uuid())
+  preparoEscolaId String
+  preparoEscola   PreparoEscola @relation(fields: [preparoEscolaId], references: [id], onDelete: Cascade)
+  itemId          String
+  item            Item          @relation(fields: [itemId], references: [id])
+  quantidade      Float // Quantidade real usada na panela daquela escola
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("preparo_ingredientes")
+}
+
+model EstoqueAtual {
+  id              String   @id @default(uuid())
+  escolaId        String
+  escola          Escola   @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId          String
+  item            Item     @relation(fields: [itemId], references: [id])
+  quantityInteger Int // Always stored as an integer (unopened packages)
+  lastUpdated     DateTime @default(now()) @updatedAt
+
+  @@unique([escolaId, itemId])
+  @@map("estoque_atual")
+}
+
+model PlanejamentoMensal {
+  id        String             @id @default(uuid())
+  escolaId  String
+  escola    Escola             @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  fichaId   String
+  ficha     FichaTecnica       @relation(fields: [fichaId], references: [id])
+  frequency Int // Number of days served in a month
+  month     Int // 1 to 12
+  year      Int
+  status    PlanejamentoStatus @default(DRAFT) // Can be frozen to block further changes
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@map("planejamento_mensal")
+}
+
+model Movimentacao {
+  id        String           @id @default(uuid())
+  escolaId  String
+  escola    Escola           @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item             @relation(fields: [itemId], references: [id])
+  type       MovimentacaoType
+  quantity   Int // Movement in integer packages
+  numeroGuia String?
+  createdAt  DateTime         @default(now())
+
+  @@map("movimentacoes")
+}
+
+model MetaPreparo {
+  id               String       @id @default(uuid())
+  escolaId         String
+  fichaId          String
+  quantidadePadrao Float        // Quantidade de porções/receitas fixas para essa escola
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  escola Escola @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  ficha  FichaTecnica @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+
+  @@unique([escolaId, fichaId]) // Uma escola só tem uma meta padrão por ficha
+  @@map("metas_preparo")
+}
+
+model Cardapio {
+  id             String       @id @default(uuid())
+  data_agendada  DateTime
+  descricao      String?
+  isFeriado      Boolean      @default(false)
+  tipos_escola   String[]
+  fichaTecnicaId String?
+  ficha          FichaTecnica? @relation(fields: [fichaTecnicaId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("cardapios")
+}
+
+model ConsumoFixo {
+  id        String   @id @default(uuid())
+  escolaId  String
+  escola    Escola   @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantidade Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("consumos_fixos")
+}
