@@ -21,6 +21,7 @@ import { Escolas } from '../pages/Rede/Escolas';
 import { DiarioBordo } from '../pages/Supervisao/DiarioBordo';
 import { Perfil } from '../pages/Configuracoes/Perfil';
 import { GestaoDietas } from '../pages/GestaoDietas';
+import { UsuariosPage } from '../pages/Configuracoes/Usuarios';
 
 export const AppRoutes = () => {
   return (
@@ -49,6 +50,7 @@ export const AppRoutes = () => {
           <Route path="/diario-bordo" element={<DiarioBordo />} />
           <Route path="/dietas" element={<GestaoDietas />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/usuarios" element={<UsuariosPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

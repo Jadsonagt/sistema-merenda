@@ -21,10 +21,19 @@ import { alertaRoutes } from './routes/alerta.routes.js';
 import { diarioRoutes } from './routes/diario.routes.js';
 import { dietaRoutes } from './routes/dieta.routes.js';
 import { relatorioRoutes } from './routes/relatorio.routes.js';
+import { usuarioRoutes } from './routes/usuario.routes.js';
 dotenv.config();
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
+// Endpoint de Health Check (útil para manter o Render acordado)
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'OK', uptime: process.uptime() });
+});
 // Rotas da Documentação
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 // Rotas públicas
@@ -47,6 +56,7 @@ app.use('/api/alertas', alertaRoutes);
 app.use('/api', diarioRoutes);
 app.use('/api', dietaRoutes);
 app.use('/api/relatorios', relatorioRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 // Middleware Global de Tratamento de Erros
 app.use((err, req, res, next) => {
     console.error(err.stack);

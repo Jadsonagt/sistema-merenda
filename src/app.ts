@@ -21,6 +21,7 @@ import { alertaRoutes } from './routes/alerta.routes.js';
 import { diarioRoutes } from './routes/diario.routes.js';
 import { dietaRoutes } from './routes/dieta.routes.js';
 import { relatorioRoutes } from './routes/relatorio.routes.js';
+import { usuarioRoutes } from './routes/usuario.routes.js';
 
 dotenv.config();
 
@@ -62,6 +63,7 @@ app.use('/api/alertas', alertaRoutes);
 app.use('/api', diarioRoutes);
 app.use('/api', dietaRoutes);
 app.use('/api/relatorios', relatorioRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 // Middleware Global de Tratamento de Erros
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

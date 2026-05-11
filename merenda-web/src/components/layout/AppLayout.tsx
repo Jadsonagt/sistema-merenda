@@ -21,14 +21,26 @@ import {
   AlertCircle,
   ArrowRight
 } from 'lucide-react';
-import { getPendenciasProcessamento } from '@/services/api/estoque';
 import { Toaster } from '@/components/ui/toaster';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { jwtDecode } from 'jwt-decode';
+import { getPendenciasProcessamento } from '@/services/api/estoque';
 
 export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [pendingDates, setPendingDates] = useState<string[]>([]);
+
+  const userRole = useMemo(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+      const decoded: any = jwtDecode(token);
+      return decoded.role;
+    } catch (e) {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const fetchPendencias = async () => {
@@ -181,6 +193,12 @@ export const AppLayout: React.FC = () => {
             <User className="h-5 w-5" />
             <span className="text-sm font-medium">Meu Perfil</span>
           </NavLink>
+          {userRole === 'ADMIN' && (
+            <NavLink to="/usuarios" className={navItemClasses} onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}>
+              <ShieldPlus className="h-5 w-5" />
+              <span className="text-sm font-medium">Gestão de Usuários</span>
+            </NavLink>
+          )}
         </nav>
 
         <div className="p-4 border-t border-slate-800">
