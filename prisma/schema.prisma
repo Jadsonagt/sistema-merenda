@@ -23,6 +23,7 @@ enum Role {
   ADMIN
   SUPERVISOR
   SUPERVISORA
+  NUTRICIONISTA
 }
 
 enum MovimentacaoType {
@@ -31,6 +32,7 @@ enum MovimentacaoType {
   TRANSFER
   ADJUSTMENT
   CONSUMPTION
+  SAIDA_DESCARTE
 }
 
 enum PlanejamentoStatus {
@@ -43,61 +45,73 @@ enum PlanejamentoStatus {
 // -------------------------------------------------------------
 
 model Usuario {
-  id        String   @id @default(uuid())
-  nome      String
-  email     String   @unique
-  senha     String
-  role              Role     @default(SUPERVISORA)
-  rotaId            String?
-  rota              Rota?    @relation(fields: [rotaId], references: [id])
-  resetToken        String?
-  resetTokenExpires DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                   String        @id @default(uuid())
+  nome                 String
+  email                String        @unique
+  senha                String
+  role                 Role          @default(SUPERVISORA)
+  rotaId               String?
+  rota                 Rota?         @relation(fields: [rotaId], references: [id])
+  resetToken           String?
+  resetTokenExpires    DateTime?
+  enderecoResidencial  String?
+  latitudeResidencial  Float?
+  longitudeResidencial Float?
+  diarios              DiarioBordo[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   @@map("usuarios")
 }
 
 model Rota {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
   usuarios  Usuario[]
   escolas   Escola[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@map("rotas")
 }
 
 model Escola {
-  id                   String               @id @default(uuid())
-  name                 String
-  type                 String // e.g., Integral, Parcial
-  rotaId               String
-  rota                 Rota                 @relation(fields: [rotaId], references: [id])
-  estoques             EstoqueAtual[]
-  planejamentosMensais PlanejamentoMensal[]
-  movimentacoes        Movimentacao[]
-  metasPreparo         MetaPreparo[]
-  consumosFixos        ConsumoFixo[]
-  preparos             PreparoEscola[]
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
+  id                    String                @id @default(uuid())
+  name                  String
+  type                  String // e.g., Integral, Parcial
+  rotaId                String
+  rota                  Rota                  @relation(fields: [rotaId], references: [id])
+  estoques              Estoque[]
+  planejamentosMensais  PlanejamentoMensal[]
+  movimentacoes         Movimentacao[]
+  metasPreparo          MetaPreparo[]
+  consumosFixos         ConsumoFixo[]
+  preparos              PreparoEscola[]
+  inventariosHistoricos InventarioHistorico[]
+  alertasRemanejamento  AlertaRemanejamento[]
+  demandasDieta         DemandaDieta[]
+  endereco              String?
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   @@map("escolas")
 }
 
 model Item {
-  id                   String                @id @default(uuid())
-  name                 String
-  baseUnit             String // e.g., Kg, Litro, Unidade
-  packagingSize        Float // e.g., 5 (for a 5 Kg package)
-  estoques             EstoqueAtual[]
-  movimentacoes        Movimentacao[]
-  consumosFixos        ConsumoFixo[]
-  preparoIngredientes  PreparoIngrediente[]
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  id                    String                @id @default(uuid())
+  name                  String
+  baseUnit              String // e.g., Kg, Litro, Unidade
+  packagingSize         Float // e.g., 5 (for a 5 Kg package)
+  estoques              Estoque[]
+  movimentacoes         Movimentacao[]
+  consumosFixos         ConsumoFixo[]
+  preparoIngredientes   PreparoIngrediente[]
+  inventariosHistoricos InventarioHistorico[]
+  alertasRemanejamento  AlertaRemanejamento[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   @@map("itens")
 }
@@ -117,14 +131,14 @@ model FichaTecnica {
 }
 
 model PreparoEscola {
-  id             String              @id @default(uuid())
+  id             String               @id @default(uuid())
   escolaId       String
-  escola         Escola              @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  escola         Escola               @relation(fields: [escolaId], references: [id], onDelete: Cascade)
   fichaTecnicaId String
-  fichaTecnica   FichaTecnica        @relation(fields: [fichaTecnicaId], references: [id], onDelete: Cascade)
+  fichaTecnica   FichaTecnica         @relation(fields: [fichaTecnicaId], references: [id], onDelete: Cascade)
   ingredientes   PreparoIngrediente[]
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@unique([escolaId, fichaTecnicaId])
   @@map("preparos_escola")
@@ -143,17 +157,17 @@ model PreparoIngrediente {
   @@map("preparo_ingredientes")
 }
 
-model EstoqueAtual {
+model Estoque {
   id              String   @id @default(uuid())
   escolaId        String
   escola          Escola   @relation(fields: [escolaId], references: [id], onDelete: Cascade)
   itemId          String
-  item            Item     @relation(fields: [itemId], references: [id])
-  quantityInteger Int // Always stored as an integer (unopened packages)
-  lastUpdated     DateTime @default(now()) @updatedAt
+  item            Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantidade      Float
+  dataAtualizacao DateTime @default(now()) @updatedAt
 
   @@unique([escolaId, itemId])
-  @@map("estoque_atual")
+  @@map("estoque")
 }
 
 model PlanejamentoMensal {
@@ -173,28 +187,30 @@ model PlanejamentoMensal {
 }
 
 model Movimentacao {
-  id        String           @id @default(uuid())
-  escolaId  String
-  escola    Escola           @relation(fields: [escolaId], references: [id], onDelete: Cascade)
-  itemId    String
-  item      Item             @relation(fields: [itemId], references: [id])
+  id         String           @id @default(uuid())
+  escolaId   String
+  escola     Escola           @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       Item             @relation(fields: [itemId], references: [id])
   type       MovimentacaoType
   quantity   Int // Movement in integer packages
   numeroGuia String?
+  motivo     String?
+  observacao String?
   createdAt  DateTime         @default(now())
 
   @@map("movimentacoes")
 }
 
 model MetaPreparo {
-  id               String       @id @default(uuid())
+  id               String   @id @default(uuid())
   escolaId         String
   fichaId          String
-  quantidadePadrao Float        // Quantidade de porções/receitas fixas para essa escola
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  quantidadePadrao Float // Quantidade de porções/receitas fixas para essa escola
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  escola Escola @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  escola Escola       @relation(fields: [escolaId], references: [id], onDelete: Cascade)
   ficha  FichaTecnica @relation(fields: [fichaId], references: [id], onDelete: Cascade)
 
   @@unique([escolaId, fichaId]) // Uma escola só tem uma meta padrão por ficha
@@ -202,28 +218,145 @@ model MetaPreparo {
 }
 
 model Cardapio {
-  id             String       @id @default(uuid())
+  id             String        @id @default(uuid())
   data_agendada  DateTime
   descricao      String?
-  isFeriado      Boolean      @default(false)
+  isFeriado      Boolean       @default(false)
   tipos_escola   String[]
   fichaTecnicaId String?
   ficha          FichaTecnica? @relation(fields: [fichaTecnicaId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@map("cardapios")
 }
 
 model ConsumoFixo {
+  id               String   @id @default(uuid())
+  escolaId         String
+  escola           Escola   @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId           String
+  item             Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantidadeDiaria Float
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([escolaId, itemId])
+  @@map("consumos_fixos")
+}
+
+model InventarioHistorico {
+  id                      String   @id @default(uuid())
+  escolaId                String
+  escola                  Escola   @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId                  String
+  item                    Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantidadeFisica        Float
+  estoqueTeoricoNoMomento Float
+  dataContagem            DateTime @default(now())
+
+  @@map("inventario_historico")
+}
+
+model ProcessamentoLog {
+  id                String   @id @default(uuid())
+  dataProcessamento DateTime
+  executadoEm       DateTime @default(now())
+  status            String // SUCESSO, ERRO
+  resumo            String? // JSON ou texto descritivo
+
+  @@unique([dataProcessamento])
+  @@map("processamento_logs")
+}
+
+model AlertaRemanejamento {
+  id              String    @id @default(uuid())
+  escolaId        String
+  escola          Escola    @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  itemId          String
+  item            Item      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  quantidadeRisco Float
+  dataVencimento  DateTime?
+  status          String    @default("PENDENTE") // PENDENTE, RESOLVIDO
+  criadoEm        DateTime  @default(now())
+  atualizadoEm    DateTime  @updatedAt
+
+  @@map("alertas_remanejamento")
+}
+
+model DistanciaReferencia {
+  id          String   @id @default(uuid())
+  origemId    String
+  destinoId   String
+  quilometros Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([origemId, destinoId])
+  @@map("distancias_referencia")
+}
+
+model DiarioBordo {
+  id              String         @id @default(uuid())
+  usuarioId       String
+  usuario         Usuario        @relation(fields: [usuarioId], references: [id])
+  data            DateTime
+  kmTotal         Float
+  odometroInicial Float?         @default(0)
+  trechos         TrechoViagem[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([usuarioId, data])
+  @@map("diarios_bordo")
+}
+
+model TrechoViagem {
+  id        String      @id @default(uuid())
+  diarioId  String
+  diario    DiarioBordo @relation(fields: [diarioId], references: [id], onDelete: Cascade)
+  ordem     Int
+  pontoNome String
+  kmTrecho  Float
+  createdAt DateTime    @default(now())
+
+  @@map("trechos_viagem")
+}
+
+model PontoInteresse {
   id        String   @id @default(uuid())
-  escolaId  String
-  escola    Escola   @relation(fields: [escolaId], references: [id], onDelete: Cascade)
-  itemId    String
-  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  quantidade Int
+  nome      String
+  endereco  String?
+  tipo      String // ESCOLA, APOIO, RESIDENCIA
+  latitude  Float?
+  longitude Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("consumos_fixos")
+  @@map("pontos_interesse")
+}
+
+model TipoDieta {
+  id        String         @id @default(uuid())
+  nome      String         @unique // Ex: APLV, Zero Lactose, Celíaco
+  descricao String?
+  demandas  DemandaDieta[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@map("tipos_dieta")
+}
+
+model DemandaDieta {
+  id          String    @id @default(uuid())
+  escolaId    String
+  escola      Escola    @relation(fields: [escolaId], references: [id], onDelete: Cascade)
+  tipoDietaId String
+  tipoDieta   TipoDieta @relation(fields: [tipoDietaId], references: [id], onDelete: Cascade)
+  quantidade  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([escolaId, tipoDietaId])
+  @@map("demandas_dieta")
 }

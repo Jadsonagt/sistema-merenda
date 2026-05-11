@@ -26,7 +26,7 @@ export class ComprasController {
         return res.status(400).json({ error: 'A dataInicio não pode ser posterior à dataFim.' });
       }
 
-      const previsao = await PrevisaoComprasService.calcularNecessidades(escolaId, queryDataInicio, queryDataFim);
+      const previsao = await PrevisaoComprasService.calcularNecessidades(String(escolaId), queryDataInicio, queryDataFim);
 
       return res.status(200).json(previsao);
     } catch (error: any) {

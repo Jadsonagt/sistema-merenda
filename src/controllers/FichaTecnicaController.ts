@@ -2,6 +2,42 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 
 export class FichaTecnicaController {
+  /**
+   * @swagger
+   * /api/fichas:
+   *   post:
+   *     summary: Cria uma nova ficha técnica (receita)
+   *     tags: [Fichas Técnicas]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - name
+   *               - type
+   *             properties:
+   *               name:
+   *                 type: string
+   *               type:
+   *                 type: string
+   *               ingredientes:
+   *                 type: array
+   *                 description: Lista de ingredientes da receita (opcional no momento da criação da ficha básica)
+   *                 items:
+   *                   type: object
+   *                   properties:
+   *                     itemId:
+   *                       type: string
+   *                     quantidade:
+   *                       type: number
+   *     responses:
+   *       201:
+   *         description: Ficha técnica criada com sucesso
+   */
   async create(req: Request, res: Response) {
     try {
       const { name, type } = req.body;
@@ -21,6 +57,18 @@ export class FichaTecnicaController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/fichas:
+   *   get:
+   *     summary: Lista todas as fichas técnicas
+   *     tags: [Fichas Técnicas]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Lista retornada com sucesso
+   */
   async list(req: Request, res: Response) {
     try {
       const fichas = await prisma.fichaTecnica.findMany({
@@ -44,7 +92,7 @@ export class FichaTecnicaController {
       }
 
       const fichaExists = await prisma.fichaTecnica.findUnique({
-        where: { id },
+        where: { id: String(id) },
       });
 
       if (!fichaExists) {
@@ -52,7 +100,7 @@ export class FichaTecnicaController {
       }
 
       const ficha = await prisma.fichaTecnica.update({
-        where: { id },
+        where: { id: String(id) },
         data: { name, type },
       });
 
@@ -69,7 +117,7 @@ export class FichaTecnicaController {
 
       // Trava manual: verificar se a ficha está agendada em algum cardápio
       const usoNoCardapio = await prisma.cardapio.findFirst({
-        where: { fichaTecnicaId: id },
+        where: { fichaTecnicaId: String(id) },
       });
 
       if (usoNoCardapio) {
@@ -78,7 +126,7 @@ export class FichaTecnicaController {
 
       // Trava manual: verificar se a ficha tem preparos vinculados
       const usoNoPreparo = await prisma.preparoEscola.findFirst({
-        where: { fichaTecnicaId: id },
+        where: { fichaTecnicaId: String(id) },
       });
 
       if (usoNoPreparo) {
@@ -86,7 +134,7 @@ export class FichaTecnicaController {
       }
 
       await prisma.fichaTecnica.delete({
-        where: { id },
+        where: { id: String(id) },
       });
 
       return res.status(200).json({ message: 'Ficha técnica excluída com sucesso.' });

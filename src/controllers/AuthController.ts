@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 export class AuthController {
   async registrar(req: Request, res: Response) {
     try {
-      const { nome, email, senha, role } = req.body;
+      const { nome, email, senha } = req.body;
 
       if (!nome || !email || !senha) {
         return res.status(400).json({ error: 'Campos nome, email e senha são obrigatórios' });
@@ -19,20 +19,18 @@ export class AuthController {
       });
 
       if (usuarioExiste) {
-        return res.status(400).json({ error: 'Usuário já existe' });
+        return res.status(400).json({ error: 'E-mail já cadastrado no sistema.' });
       }
 
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(senha, saltRounds);
-
-      const roleEnum = role === 'ADMIN' ? Role.ADMIN : Role.SUPERVISORA;
 
       const usuario = await prisma.usuario.create({
         data: {
           nome,
           email,
           senha: hashedPassword,
-          role: roleEnum,
+          role: Role.SUPERVISORA, // Default role for self-registration
         },
       });
 
@@ -44,6 +42,41 @@ export class AuthController {
       });
     } catch (error) {
       console.error('Erro no registro:', error);
+      return res.status(500).json({ error: 'Erro interno de servidor' });
+    }
+  }
+
+  async resetPasswordMVP(req: Request, res: Response) {
+    try {
+      const { email, novaSenha } = req.body;
+
+      if (!email || !novaSenha) {
+        return res.status(400).json({ error: 'Email e nova senha são obrigatórios' });
+      }
+
+      const usuario = await prisma.usuario.findUnique({
+        where: { email },
+      });
+
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(novaSenha, saltRounds);
+
+      await prisma.usuario.update({
+        where: { id: usuario.id },
+        data: {
+          senha: hashedPassword,
+          resetToken: null,
+          resetTokenExpires: null,
+        },
+      });
+
+      return res.status(200).json({ message: 'Senha redefinida com sucesso' });
+    } catch (error) {
+      console.error('Erro no resetPasswordMVP:', error);
       return res.status(500).json({ error: 'Erro interno de servidor' });
     }
   }
@@ -167,6 +200,46 @@ export class AuthController {
     } catch (error) {
       console.error('Erro no resetarSenha:', error);
       return res.status(500).json({ error: 'Erro interno de servidor' });
+    }
+  }
+
+  async me(req: Request, res: Response) {
+    try {
+      const usuarioId = req.user?.id;
+      if (!usuarioId) return res.status(401).json({ error: 'Não autorizado' });
+
+      const usuario = await prisma.usuario.findUnique({
+        where: { id: usuarioId },
+        select: { id: true, nome: true, email: true, role: true, enderecoResidencial: true, latitudeResidencial: true, longitudeResidencial: true, rotaId: true }
+      });
+
+      return res.status(200).json(usuario);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao buscar dados do usuário' });
+    }
+  }
+
+  async updateMe(req: Request, res: Response) {
+    try {
+      const usuarioId = req.user?.id;
+      const { nome, enderecoResidencial, latitudeResidencial, longitudeResidencial, rotaId } = req.body;
+      if (!usuarioId) return res.status(401).json({ error: 'Não autorizado' });
+
+      const usuario = await prisma.usuario.update({
+        where: { id: usuarioId },
+        data: { 
+          nome, 
+          enderecoResidencial, 
+          latitudeResidencial: latitudeResidencial ? Number(latitudeResidencial) : null,
+          longitudeResidencial: longitudeResidencial ? Number(longitudeResidencial) : null,
+          rotaId 
+        },
+        select: { id: true, nome: true, email: true, role: true, enderecoResidencial: true, latitudeResidencial: true, longitudeResidencial: true, rotaId: true }
+      });
+
+      return res.status(200).json(usuario);
+    } catch (error) {
+      return res.status(500).json({ error: 'Erro ao atualizar dados do usuário' });
     }
   }
 }

@@ -3,8 +3,11 @@ import { MovimentacaoType } from '@prisma/client';
 
 export class ConsumoService {
   public static async executarProcessamentoDiario(dataBase: Date) {
-    const startOfDay = new Date(dataBase.setUTCHours(0, 0, 0, 0));
-    const endOfDay = new Date(dataBase.setUTCHours(23, 59, 59, 999));
+    const startOfDay = new Date(dataBase);
+    startOfDay.setHours(0, 0, 0, 0); // Força a meia-noite no fuso horário local do servidor
+
+    const endOfDay = new Date(dataBase);
+    endOfDay.setHours(23, 59, 59, 999); // Força o fim do dia no fuso horário local
 
     const result = await prisma.$transaction(async (tx) => {
       const cardapios = await tx.cardapio.findMany({

@@ -78,6 +78,8 @@ export const CardapioForm: React.FC = () => {
         tipos_escola: tiposEscola
       });
       navigate('/cardapios');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       setError('Erro ao criar o cardápio. Verifique os dados e tente novamente.');

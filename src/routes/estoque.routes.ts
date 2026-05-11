@@ -5,91 +5,64 @@ import { verificarToken, permitirRoles } from '../middlewares/authMiddleware.js'
 const estoqueRoutes = Router();
 const estoqueController = new EstoqueController();
 
-/**
- * @swagger
- * /api/escolas/{escolaId}/estoque:
- *   get:
- *     summary: Consulta de saldo de estoque
- *     description: Retorna o saldo atual de estoque de uma escola específica.
- *     tags: [Estoque]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: escolaId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID da escola
- *     responses:
- *       200:
- *         description: Retorno dos saldos em pacotes inteiros.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   itemId:
- *                     type: string
- *                   quantityInteger:
- *                     type: integer
- *                     description: Saldo em pacotes fechados inteiros
- *       401:
- *         description: Não autorizado para acesso (Token ausente ou inválido).
- *       500:
- *         description: Erro interno no servidor.
- */
-estoqueRoutes.get('/escolas/:escolaId/estoque', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), estoqueController.getByEscola);
+// Consulta de estoque atual de uma escola
+estoqueRoutes.get('/escolas/:escolaId/estoque', 
+  verificarToken, 
+  permitirRoles(['ADMIN', 'SUPERVISORA']), 
+  estoqueController.listarEstoque
+);
 
-/**
- * @swagger
- * /api/escolas/{escolaId}/estoque/inventario:
- *   post:
- *     summary: Lançamento de Inventário Físico
- *     description: "Atenção: A contagem física informada neste endpoint SOBRESCREVE o saldo teórico do sistema."
- *     tags: [Estoque]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: escolaId
- *         required: true
- *         schema:
- *           type: string
- *         description: ID da escola
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - items
- *             properties:
- *               items:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     itemId:
- *                       type: string
- *                     quantityInteger:
- *                       type: integer
- *     responses:
- *       200:
- *         description: Inventário processado com sucesso.
- *       400:
- *         description: Erro na validação dos dados enviados.
- *       401:
- *         description: Não autorizado.
- *       500:
- *         description: Erro interno no servidor.
- */
-estoqueRoutes.post('/escolas/:escolaId/estoque/inventario', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), estoqueController.registerInventory);
+// Lançamento de Inventário Físico (Sobrescrita em lote)
+estoqueRoutes.post('/escolas/:escolaId/inventario', 
+  verificarToken, 
+  permitirRoles(['ADMIN', 'SUPERVISORA']), 
+  estoqueController.salvarInventarioFisico
+);
 
-estoqueRoutes.post('/estoque/entrada', verificarToken, permitirRoles(['ADMIN']), estoqueController.registrarEntrada);
-estoqueRoutes.post('/estoque/remanejamento', verificarToken, permitirRoles(['ADMIN']), estoqueController.remanejar);
+// Consulta de Histórico de Inventário
+estoqueRoutes.get('/escolas/:escolaId/inventario/historico',
+  verificarToken,
+  permitirRoles(['ADMIN', 'SUPERVISORA']),
+  estoqueController.consultarHistorico
+);
+
+// Descarte/Baixa de Estoque Manual
+estoqueRoutes.post('/escolas/:escolaId/estoque/descarte', 
+  verificarToken, 
+  permitirRoles(['ADMIN', 'SUPERVISORA']), 
+  estoqueController.descartar
+);
+
+// Entradas e Remanejamentos (Legado/Suporte)
+estoqueRoutes.post('/estoque/entrada', 
+  verificarToken, 
+  permitirRoles(['ADMIN']), 
+  estoqueController.registrarEntrada
+);
+
+estoqueRoutes.post('/estoque/remanejamento', 
+  verificarToken, 
+  permitirRoles(['ADMIN']), 
+  estoqueController.remanejar
+);
+
+estoqueRoutes.post('/remanejamentos/lote', 
+  verificarToken, 
+  permitirRoles(['ADMIN', 'SUPERVISORA']), 
+  estoqueController.remanejarLote
+);
+
+estoqueRoutes.get('/remanejamentos/historico', 
+  verificarToken, 
+  permitirRoles(['ADMIN', 'SUPERVISORA']), 
+  estoqueController.listarHistoricoRemanejamento
+);
+
+// Pendências de Processamento (Últimos 7 dias)
+estoqueRoutes.get('/pendencias-processamento',
+  verificarToken,
+  permitirRoles(['ADMIN', 'SUPERVISORA']),
+  estoqueController.verificarPendencias
+);
 
 export { estoqueRoutes };

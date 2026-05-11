@@ -7,11 +7,12 @@ const escolaRoutes = Router();
 const escolaController = new EscolaController();
 const comprasController = new ComprasController();
 
-escolaRoutes.post('/', verificarToken, permitirRoles(['ADMIN']), escolaController.create);
-escolaRoutes.get('/', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), escolaController.list);
-escolaRoutes.get('/rota/:rota_id', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), escolaController.listByRota);
-escolaRoutes.get('/:escolaId/previsao-compras', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), comprasController.getPrevisao);
-escolaRoutes.put('/:id', verificarToken, permitirRoles(['ADMIN']), escolaController.update);
+escolaRoutes.post('/', verificarToken, permitirRoles(['ADMIN', 'NUTRICIONISTA']), escolaController.create);
+escolaRoutes.get('/', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA', 'NUTRICIONISTA']), escolaController.list);
+escolaRoutes.get('/diario/agrupadas', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA', 'NUTRICIONISTA']), escolaController.listarParaDiarioBordo);
+escolaRoutes.get('/rota/:rota_id', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA', 'NUTRICIONISTA']), escolaController.listByRota);
+escolaRoutes.get('/:escolaId/previsao-compras', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA', 'NUTRICIONISTA']), comprasController.getPrevisao);
+escolaRoutes.put('/:id', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA', 'NUTRICIONISTA']), escolaController.update);
 escolaRoutes.delete('/:id', verificarToken, permitirRoles(['ADMIN']), escolaController.delete);
 
 export { escolaRoutes };

@@ -16,6 +16,11 @@ import { consumoFixoRoutes } from './routes/consumoFixo.routes.js';
 import { auditoriaRoutes } from './routes/auditoriaRoutes.js';
 import { dashboardRoutes } from './routes/dashboard.routes.js';
 import { preparoRoutes } from './routes/preparo.routes.js';
+import { motorRoutes } from './routes/motor.routes.js';
+import { alertaRoutes } from './routes/alerta.routes.js';
+import { diarioRoutes } from './routes/diario.routes.js';
+import { dietaRoutes } from './routes/dieta.routes.js';
+import { relatorioRoutes } from './routes/relatorio.routes.js';
 
 dotenv.config();
 
@@ -39,10 +44,15 @@ app.use('/api', estoqueRoutes);
 app.use('/api/metas', metaRoutes);
 app.use('/api/consumos', consumoRoutes);
 app.use('/api/cardapios', cardapioRoutes);
-app.use('/api/consumo-fixo', consumoFixoRoutes);
+app.use('/api', consumoFixoRoutes);
 app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/escolas', preparoRoutes);
+app.use('/api/motor', motorRoutes);
+app.use('/api/alertas', alertaRoutes);
+app.use('/api', diarioRoutes);
+app.use('/api', dietaRoutes);
+app.use('/api/relatorios', relatorioRoutes);
 
 // Middleware Global de Tratamento de Erros
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

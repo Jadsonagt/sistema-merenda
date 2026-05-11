@@ -10,6 +10,8 @@ cron.schedule('55 23 * * *', async () => {
   } catch (error: any) {
     console.error('[CRON] Erro ao executar o processamento em lote diário:', error.message || error);
   }
+}, {
+  timezone: "America/Sao_Paulo"
 });
 
 console.log('Cron Job de Consumo Diário agendado para rodar às 23:55.');

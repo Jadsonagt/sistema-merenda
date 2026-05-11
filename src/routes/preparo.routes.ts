@@ -17,4 +17,7 @@ preparoRoutes.get('/:escolaId/preparos/:fichaTecnicaId', verificarToken, permiti
 // DELETE /api/escolas/:escolaId/preparos/:fichaTecnicaId  -> Excluir preparo
 preparoRoutes.delete('/:escolaId/preparos/:fichaTecnicaId', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), preparoController.excluirPreparo);
 
+// POST   /api/escolas/:escolaId/clonar-preparos           -> Clonar preparos de outra escola
+preparoRoutes.post('/:escolaId/clonar-preparos', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), preparoController.clonarPreparos);
+
 export { preparoRoutes };

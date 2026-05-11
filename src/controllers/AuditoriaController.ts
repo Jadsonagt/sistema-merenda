@@ -50,8 +50,12 @@ export class AuditoriaController {
           include: {
             ficha: {
               include: {
-                ingredientes: {
-                  include: { item: true },
+                preparos: {
+                  include: {
+                    ingredientes: {
+                      include: { item: true },
+                    },
+                  },
                 },
                 metasPreparo: true,
               },
@@ -65,14 +69,14 @@ export class AuditoriaController {
         });
 
         // Group total stock across all schools
-        const estoqueRaw = await tx.estoqueAtual.groupBy({
+        const estoqueRaw = await tx.estoque.groupBy({
           by: ['itemId'],
           _sum: {
-            quantityInteger: true,
+            quantidade: true,
           },
         });
 
-        const estoqueAtualMap = new Map(estoqueRaw.map((e) => [e.itemId, e._sum.quantityInteger || 0]));
+        const estoqueAtualMap = new Map(estoqueRaw.map((e) => [e.itemId, e._sum.quantidade || 0]));
 
         // Calculate theoretical fractioned needs
         const necessidadesFracionadas = new Map<string, { total: number; item: any }>();
@@ -82,10 +86,13 @@ export class AuditoriaController {
           if (!cardapio.ficha) continue;
 
           for (const meta of cardapio.ficha.metasPreparo) {
-            for (const ingrediente of cardapio.ficha.ingredientes) {
+            const preparoEscola = cardapio.ficha.preparos.find((p) => p.escolaId === meta.escolaId);
+            if (!preparoEscola) continue;
+
+            for (const ingrediente of preparoEscola.ingredientes) {
               const itemId = ingrediente.itemId;
               const item = ingrediente.item;
-              const fraction = meta.quantidadePadrao * ingrediente.quantityInBaseUnit;
+              const fraction = meta.quantidadePadrao * ingrediente.quantidade;
 
               if (!necessidadesFracionadas.has(itemId)) {
                 necessidadesFracionadas.set(itemId, { total: 0, item });
@@ -100,7 +107,7 @@ export class AuditoriaController {
           for (const fixo of consumosFixos) {
             const itemId = fixo.itemId;
             const item = fixo.item;
-            const fraction = fixo.quantidade * item.packagingSize * workingDays;
+            const fraction = fixo.quantidadeDiaria * item.packagingSize * workingDays;
 
             if (!necessidadesFracionadas.has(itemId)) {
               necessidadesFracionadas.set(itemId, { total: 0, item });

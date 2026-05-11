@@ -137,7 +137,7 @@ export class CardapioController {
             }
 
             const cardapio = await prisma.cardapio.update({
-                where: { id },
+                where: { id: String(id) },
                 data: {
                     data_agendada: dataServico,
                     descricao: descricao || null,
@@ -159,8 +159,25 @@ export class CardapioController {
         try {
             const { id } = req.params;
 
+            const cardapio = await prisma.cardapio.findUnique({
+                where: { id: String(id) }
+            });
+
+            if (!cardapio) {
+                return res.status(404).json({ error: 'Cardápio não encontrado.' });
+            }
+
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+
+            if (cardapio.data_agendada < hoje) {
+                return res.status(403).json({ 
+                    error: 'Não é possível excluir um cardápio de uma data passada. O estoque deste dia já foi consolidado. Para corrigir saldos, utilize a tela de Ajuste de Estoque.' 
+                });
+            }
+
             await prisma.cardapio.delete({
-                where: { id },
+                where: { id: String(id) },
             });
 
             return res.status(200).json({ message: 'Cardápio excluído com sucesso.' });

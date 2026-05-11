@@ -27,6 +27,9 @@ interface Escola {
   name: string;
   type: string;
   rotaId: string;
+  endereco?: string;
+  latitude?: number;
+  longitude?: number;
   rota?: Rota;
 }
 
@@ -41,17 +44,24 @@ const TIPOS_UNIDADE = [
 export const Escolas: React.FC = () => {
   const [escolas, setEscolas] = useState<Escola[]>([]);
   const [rotas, setRotas] = useState<Rota[]>([]);
+  const [filtroRota, setFiltroRota] = useState<string>('todas');
   const [loading, setLoading] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('');
+  const [newEndereco, setNewEndereco] = useState('');
+  const [newLatitude, setNewLatitude] = useState('');
+  const [newLongitude, setNewLongitude] = useState('');
   const [newRotaId, setNewRotaId] = useState('');
   const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
 
   const [escolaEmEdicao, setEscolaEmEdicao] = useState<Escola | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState('');
+  const [editEndereco, setEditEndereco] = useState('');
+  const [editLatitude, setEditLatitude] = useState('');
+  const [editLongitude, setEditLongitude] = useState('');
   const [editRotaId, setEditRotaId] = useState('');
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
@@ -63,11 +73,41 @@ export const Escolas: React.FC = () => {
 
   const { toast } = useToast();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(() => {
+    const raw = localStorage.getItem('usuario');
+    return raw ? JSON.parse(raw) : null;
+  });
+
+  const fetchProfile = async () => {
+    if (!user) {
+      try {
+        const response = await api.get('/auth/me', getHeaders());
+        localStorage.setItem('usuario', JSON.stringify(response.data));
+        setUser(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar perfil:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchEscolas();
+    fetchRotas();
+    fetchProfile();
+  }, []);
+
+  const isAdmin = user?.role === 'ADMIN';
+  const isNutri = user?.role === 'NUTRICIONISTA';
+  const canCreate = isAdmin || isNutri;
+
   const fetchEscolas = async () => {
     setLoading(true);
     try {
       const response = await api.get('/escolas', getHeaders());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setEscolas(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao buscar escolas:', error);
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível carregar as escolas." });
@@ -78,14 +118,14 @@ export const Escolas: React.FC = () => {
 
   const fetchRotas = async () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await api.get('/rotas', getHeaders());
       setRotas(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao buscar rotas:', error);
     }
   };
-
-  useEffect(() => { fetchEscolas(); fetchRotas(); }, []);
 
   const getRotaName = (rotaId: string) => {
     const rota = rotas.find(r => r.id === rotaId);
@@ -94,7 +134,7 @@ export const Escolas: React.FC = () => {
 
   // --- Criação ---
   const handleOpenCreate = () => {
-    setNewName(''); setNewType(''); setNewRotaId('');
+    setNewName(''); setNewType(''); setNewEndereco(''); setNewLatitude(''); setNewLongitude(''); setNewRotaId('');
     setIsCreateOpen(true);
   };
 
@@ -105,12 +145,30 @@ export const Escolas: React.FC = () => {
       toast({ variant: "destructive", title: "Atenção", description: "Todos os campos são obrigatórios. Selecione uma Rota." });
       return;
     }
+
+    if (!newLatitude || !newLongitude) {
+      toast({ 
+        className: "bg-amber-50 text-amber-900 border-amber-200", 
+        title: "Aviso de Coordenadas", 
+        description: "A falta de Latitude/Longitude impedirá o cálculo automático de KM no Diário de Bordo." 
+      });
+    }
+
     setIsSubmittingCreate(true);
     try {
-      await api.post('/escolas', { name: newName.trim(), type: newType, rota_id: newRotaId }, getHeaders());
+      await api.post('/escolas', {
+        name: newName.trim(),
+        type: newType,
+        endereco: newEndereco.trim(),
+        latitude: newLatitude ? parseFloat(newLatitude) : null,
+        longitude: newLongitude ? parseFloat(newLongitude) : null,
+        rota_id: newRotaId
+      }, getHeaders());
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Escola criada com sucesso." });
       setIsCreateOpen(false);
       fetchEscolas();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao criar escola:', error);
       toast({ variant: "destructive", title: "Erro", description: error.response?.data?.error || "Erro ao criar escola." });
@@ -124,6 +182,9 @@ export const Escolas: React.FC = () => {
     setEscolaEmEdicao(escola);
     setEditName(escola.name);
     setEditType(escola.type);
+    setEditEndereco(escola.endereco || '');
+    setEditLatitude(escola.latitude?.toString() || '');
+    setEditLongitude(escola.longitude?.toString() || '');
     setEditRotaId(escola.rotaId);
   };
 
@@ -134,12 +195,30 @@ export const Escolas: React.FC = () => {
       toast({ variant: "destructive", title: "Atenção", description: "Todos os campos são obrigatórios. Selecione uma Rota." });
       return;
     }
+
+    if (!editLatitude || !editLongitude) {
+      toast({ 
+        className: "bg-amber-50 text-amber-900 border-amber-200", 
+        title: "Aviso de Coordenadas", 
+        description: "A falta de Latitude/Longitude impedirá o cálculo automático de KM no Diário de Bordo." 
+      });
+    }
+
     setIsSubmittingEdit(true);
     try {
-      await api.put(`/escolas/${escolaEmEdicao.id}`, { name: editName.trim(), type: editType, rota_id: editRotaId }, getHeaders());
+      await api.put(`/escolas/${escolaEmEdicao.id}`, {
+        name: editName.trim(),
+        type: editType,
+        endereco: editEndereco.trim(),
+        latitude: editLatitude ? parseFloat(editLatitude) : null,
+        longitude: editLongitude ? parseFloat(editLongitude) : null,
+        rota_id: editRotaId
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }, getHeaders());
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Escola atualizada." });
       setEscolaEmEdicao(null);
       fetchEscolas();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao editar escola:', error);
       toast({ variant: "destructive", title: "Erro", description: error.response?.data?.error || "Erro ao atualizar." });
@@ -151,11 +230,13 @@ export const Escolas: React.FC = () => {
   // --- Exclusão ---
   const handleConfirmDelete = async () => {
     if (!escolaParaExcluir) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setIsDeleting(true);
     try {
       await api.delete(`/escolas/${escolaParaExcluir.id}`, getHeaders());
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Escola excluída." });
       fetchEscolas();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.response?.status === 400) {
         toast({ variant: "destructive", title: "Exclusão Bloqueada", description: error.response?.data?.error || "Escola possui histórico de estoque ou metas vinculados." });
@@ -179,19 +260,47 @@ export const Escolas: React.FC = () => {
     return colors[type] || 'bg-slate-100 text-slate-700';
   };
 
+  const escolasFiltradas = escolas.filter(escola => 
+    filtroRota === 'todas' || escola.rotaId === filtroRota
+  );
+
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6">
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <School className="h-8 w-8 text-indigo-600" />
+            <School className="h-8 w-8 text-blue-600" />
             Escolas
           </h1>
           <p className="text-muted-foreground mt-1">Gerencie as unidades escolares da rede.</p>
         </div>
-        <Button onClick={handleOpenCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white">
-          <Plus className="mr-2 h-4 w-4" /> Nova Escola
-        </Button>
+        {canCreate && (
+          <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Plus className="mr-2 h-4 w-4" /> Nova Escola
+          </Button>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
+        <div className="flex flex-col gap-1.5 min-w-[240px]">
+          <Label className="text-xs font-bold text-slate-500 uppercase">Filtrar por Rota</Label>
+          <Select value={filtroRota} onValueChange={setFiltroRota}>
+            <SelectTrigger className="h-9 bg-slate-50 border-slate-200">
+              <SelectValue placeholder="Selecione uma rota" />
+            </SelectTrigger>
+            <SelectContent className="bg-white border shadow-xl">
+              <SelectItem value="todas">Todas as Rotas</SelectItem>
+              {rotas.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1" />
+        <div className="text-right">
+          <span className="text-[10px] font-bold text-slate-400 uppercase block">Total Exibido</span>
+          <span className="text-xl font-black text-blue-600">{escolasFiltradas.length}</span>
+        </div>
       </div>
 
       <Card className="shadow-sm border-slate-200">
@@ -203,53 +312,118 @@ export const Escolas: React.FC = () => {
           {loading ? (
             <div className="py-8 text-center text-slate-500">Carregando escolas...</div>
           ) : (
-            <Table>
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="font-semibold text-slate-700 px-6 py-4">Nome da Escola</TableHead>
-                  <TableHead className="font-semibold text-slate-700 px-6 py-4">Tipo</TableHead>
-                  <TableHead className="font-semibold text-slate-700 px-6 py-4">Rota</TableHead>
-                  <TableHead className="text-right font-semibold text-slate-700 px-6 py-4">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {escolas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-slate-500">Nenhuma escola cadastrada.</TableCell>
-                  </TableRow>
-                ) : escolas.map((escola) => (
-                  <TableRow key={escola.id} className="hover:bg-slate-50 transition-colors">
-                    <TableCell className="font-medium text-slate-800 px-6 py-4">{escola.name}</TableCell>
-                    <TableCell className="px-6 py-4">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTipoBadgeColor(escola.type)}`}>
-                        {escola.type}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-slate-600 px-6 py-4">{getRotaName(escola.rotaId)}</TableCell>
-                    <TableCell className="text-right px-6 py-4">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" className="h-8 px-2 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-amber-200" onClick={() => setEscolaPreparos(escola)} title="Configurar Preparos">
-                          <UtensilsCrossed className="h-3.5 w-3.5 mr-1" /> Preparos
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border-slate-200" onClick={() => handleOpenEdit(escola)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 border-slate-200" onClick={() => setEscolaParaExcluir(escola)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+            <>
+              {/* Visualização em Tabela (Desktop) */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="font-semibold text-slate-700 px-6 py-4">Nome da Escola</TableHead>
+                      <TableHead className="font-semibold text-slate-700 px-6 py-4">Tipo</TableHead>
+                      <TableHead className="font-semibold text-slate-700 px-6 py-4">Rota</TableHead>
+                      <TableHead className="text-right font-semibold text-slate-700 px-6 py-4">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {escolasFiltradas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-slate-500">Nenhuma escola encontrada para este filtro.</TableCell>
+                      </TableRow>
+                    ) : escolasFiltradas.map((escola) => (
+                      <TableRow key={escola.id} className="hover:bg-slate-50 transition-colors">
+                        <TableCell className="font-medium text-slate-800 px-6 py-4">{escola.name}</TableCell>
+                        <TableCell className="px-6 py-4">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getTipoBadgeColor(escola.type)}`}>
+                            {escola.type}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-slate-600 px-6 py-4">{getRotaName(escola.rotaId)}</TableCell>
+                        <TableCell className="text-right px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" className="h-8 px-2 text-xs text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-amber-200" onClick={() => setEscolaPreparos(escola)} title="Configurar Preparos">
+                              <UtensilsCrossed className="h-3.5 w-3.5 mr-1" /> Preparos
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border-slate-200" onClick={() => handleOpenEdit(escola)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            {(isAdmin || isNutri) && (
+                              <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 border-slate-200" onClick={() => setEscolaParaExcluir(escola)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Visualização em Cards (Mobile) */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {escolasFiltradas.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 border-2 border-dashed rounded-xl border-slate-100">
+                    <School className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs font-medium">Nenhuma escola encontrada.</p>
+                  </div>
+                ) : (
+                  escolasFiltradas.map((escola) => (
+                    <div key={escola.id} className="bg-slate-50 rounded-xl border p-4 shadow-sm space-y-4">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 text-lg leading-tight">{escola.name}</h3>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getTipoBadgeColor(escola.type)}`}>
+                            {escola.type}
+                          </span>
+                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-600">
+                            {getRotaName(escola.rotaId)}
+                          </span>
+                        </div>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+
+                      <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-2">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 min-w-[140px] bg-white border-amber-200 text-amber-700 hover:bg-amber-50"
+                          onClick={() => setEscolaPreparos(escola)}
+                        >
+                          <UtensilsCrossed className="h-4 w-4 mr-2" /> Preparos
+                        </Button>
+                        <div className="flex gap-2 w-full">
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 bg-white border-slate-200 text-slate-600"
+                            onClick={() => handleOpenEdit(escola)}
+                          >
+                            <Pencil className="h-4 w-4 mr-2" /> Editar
+                          </Button>
+                          {(isAdmin || isNutri) && (
+                            <Button 
+                              variant="outline" 
+                              className="flex-1 bg-white border-slate-200 text-red-600 hover:bg-red-50"
+                              onClick={() => setEscolaParaExcluir(escola)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Modal de Criação */}
       <Dialog open={isCreateOpen} onOpenChange={(open) => !open && setIsCreateOpen(false)}>
-        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-100">
+        <DialogContent
+          className="sm:max-w-[480px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-100"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="text-slate-900 dark:text-slate-100">Nova Escola</DialogTitle>
             <DialogDescription className="text-slate-500 dark:text-slate-400">Preencha os dados da unidade escolar.</DialogDescription>
@@ -288,10 +462,27 @@ export const Escolas: React.FC = () => {
                 <p className="text-xs text-amber-600">Nenhuma rota cadastrada. Cadastre uma rota primeiro.</p>
               )}
             </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-slate-900 dark:text-slate-200 font-semibold">Endereço Completo</Label>
+              <Input placeholder="Rua, Número, Bairro..." value={newEndereco} onChange={(e) => setNewEndereco(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label className="text-slate-900 dark:text-slate-200 font-semibold">Latitude</Label>
+                <Input type="number" step="any" placeholder="-23.5505" value={newLatitude} onChange={(e) => setNewLatitude(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="text-slate-900 dark:text-slate-200 font-semibold">Longitude</Label>
+                <Input type="number" step="any" placeholder="-46.6333" value={newLongitude} onChange={(e) => setNewLongitude(e.target.value)} />
+              </div>
+              <p className="col-span-2 text-[10px] text-amber-600 font-medium leading-tight">
+                Atenção: Cadastrar sem coordenadas impedirá o cálculo automático de quilometragem no Diário de Bordo.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmittingCreate}>Cancelar</Button>
-            <Button onClick={handleSubmitCreate} disabled={isSubmittingCreate || !canSaveCreate} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button onClick={handleSubmitCreate} disabled={isSubmittingCreate || !canSaveCreate} className="bg-blue-600 hover:bg-blue-700 text-white">
               {isSubmittingCreate ? 'Criando...' : 'Criar Escola'}
             </Button>
           </DialogFooter>
@@ -300,7 +491,11 @@ export const Escolas: React.FC = () => {
 
       {/* Modal de Edição */}
       <Dialog open={!!escolaEmEdicao} onOpenChange={(open) => !open && setEscolaEmEdicao(null)}>
-        <DialogContent className="sm:max-w-[480px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-100">
+        <DialogContent
+          className="sm:max-w-[480px] bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 opacity-100"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle className="text-slate-900 dark:text-slate-100">Editar Escola</DialogTitle>
             <DialogDescription className="text-slate-500 dark:text-slate-400">Ajuste os dados da unidade escolar.</DialogDescription>
@@ -336,10 +531,27 @@ export const Escolas: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-slate-900 dark:text-slate-200 font-semibold">Endereço Completo</Label>
+              <Input value={editEndereco} onChange={(e) => setEditEndereco(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label className="text-slate-900 dark:text-slate-200 font-semibold">Latitude</Label>
+                <Input type="number" step="any" value={editLatitude} onChange={(e) => setEditLatitude(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label className="text-slate-900 dark:text-slate-200 font-semibold">Longitude</Label>
+                <Input type="number" step="any" value={editLongitude} onChange={(e) => setEditLongitude(e.target.value)} />
+              </div>
+              <p className="col-span-2 text-[10px] text-amber-600 font-medium leading-tight">
+                Atenção: Cadastrar sem coordenadas impedirá o cálculo automático de quilometragem no Diário de Bordo.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEscolaEmEdicao(null)} disabled={isSubmittingEdit}>Cancelar</Button>
-            <Button onClick={handleSubmitEdit} disabled={isSubmittingEdit || !canSaveEdit} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button onClick={handleSubmitEdit} disabled={isSubmittingEdit || !canSaveEdit} className="bg-blue-600 hover:bg-blue-700 text-white">
               {isSubmittingEdit ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </DialogFooter>

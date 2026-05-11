@@ -39,6 +39,8 @@ export const Rotas: React.FC = () => {
     try {
       const response = await api.get('/rotas', getHeaders());
       setRotas(response.data);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao buscar rotas:', error);
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível carregar as rotas." });
@@ -59,7 +61,9 @@ export const Rotas: React.FC = () => {
       await api.post('/rotas', { name: newName.trim() }, getHeaders());
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Rota criada com sucesso." });
       setIsCreateModalOpen(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fetchRotas();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao criar rota:', error);
       toast({ variant: "destructive", title: "Erro", description: error.response?.data?.error || "Erro ao criar rota." });
@@ -79,8 +83,10 @@ export const Rotas: React.FC = () => {
     try {
       await api.put(`/rotas/${rotaEmEdicao.id}`, { name: editName.trim() }, getHeaders());
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Rota atualizada." });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setRotaEmEdicao(null);
       fetchRotas();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Erro ao editar rota:', error);
       toast({ variant: "destructive", title: "Erro", description: error.response?.data?.error || "Erro ao atualizar." });
@@ -93,9 +99,11 @@ export const Rotas: React.FC = () => {
     if (!rotaParaExcluir) return;
     setIsDeleting(true);
     try {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await api.delete(`/rotas/${rotaParaExcluir.id}`, getHeaders());
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Rota excluída." });
       fetchRotas();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.response?.status === 400) {
         toast({ variant: "destructive", title: "Exclusão Bloqueada", description: error.response?.data?.error || "Rota possui escolas vinculadas." });
@@ -132,45 +140,94 @@ export const Rotas: React.FC = () => {
           {loading ? (
             <div className="py-8 text-center text-slate-500">Carregando rotas...</div>
           ) : (
-            <Table>
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead className="font-semibold text-slate-700 px-6 py-4">Nome da Rota</TableHead>
-                  <TableHead className="font-semibold text-slate-700 px-6 py-4">Escolas Vinculadas</TableHead>
-                  <TableHead className="text-right font-semibold text-slate-700 px-6 py-4">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Visualização em Tabela (Desktop) */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader className="bg-slate-50">
+                    <TableRow>
+                      <TableHead className="font-semibold text-slate-700 px-6 py-4">Nome da Rota</TableHead>
+                      <TableHead className="font-semibold text-slate-700 px-6 py-4">Escolas Vinculadas</TableHead>
+                      <TableHead className="text-right font-semibold text-slate-700 px-6 py-4">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rotas.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center py-8 text-slate-500">Nenhuma rota cadastrada.</TableCell>
+                      </TableRow>
+                    ) : rotas.map((rota) => (
+                      <TableRow key={rota.id} className="hover:bg-slate-50 transition-colors">
+                        <TableCell className="font-medium text-slate-800 px-6 py-4">{rota.name}</TableCell>
+                        <TableCell className="text-slate-600 px-6 py-4">
+                          {rota.escolas && rota.escolas.length > 0 ? (
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                              {rota.escolas.length} escola(s)
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-sm">Nenhuma</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right px-6 py-4">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border-slate-200" onClick={() => handleOpenEdit(rota)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 border-slate-200" onClick={() => setRotaParaExcluir(rota)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Visualização em Cards (Mobile) */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
                 {rotas.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-slate-500">Nenhuma rota cadastrada.</TableCell>
-                  </TableRow>
-                ) : rotas.map((rota) => (
-                  <TableRow key={rota.id} className="hover:bg-slate-50 transition-colors">
-                    <TableCell className="font-medium text-slate-800 px-6 py-4">{rota.name}</TableCell>
-                    <TableCell className="text-slate-600 px-6 py-4">
-                      {rota.escolas && rota.escolas.length > 0 ? (
-                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                          {rota.escolas.length} escola(s)
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-sm">Nenhuma</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right px-6 py-4">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border-slate-200" onClick={() => handleOpenEdit(rota)}>
-                          <Pencil className="h-4 w-4" />
+                  <div className="py-8 text-center text-slate-500 border-2 border-dashed rounded-xl border-slate-100">
+                    <Route className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs font-medium">Nenhuma rota encontrada.</p>
+                  </div>
+                ) : (
+                  rotas.map((rota) => (
+                    <div key={rota.id} className="bg-slate-50 rounded-xl border p-4 shadow-sm space-y-4">
+                      <div className="space-y-1">
+                        <h3 className="font-bold text-slate-800 text-lg leading-tight">{rota.name}</h3>
+                        <div className="pt-1">
+                          {rota.escolas && rota.escolas.length > 0 ? (
+                            <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 uppercase tracking-wider">
+                              {rota.escolas.length} escola(s) vinculada(s)
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sem escolas vinculadas</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-slate-200 flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 bg-white border-slate-200 text-slate-600"
+                          onClick={() => handleOpenEdit(rota)}
+                        >
+                          <Pencil className="h-4 w-4 mr-2" /> Editar
                         </Button>
-                        <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500 hover:text-red-600 hover:bg-red-50 border-slate-200" onClick={() => setRotaParaExcluir(rota)}>
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 bg-white border-slate-200 text-red-600 hover:bg-red-50"
+                          onClick={() => setRotaParaExcluir(rota)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

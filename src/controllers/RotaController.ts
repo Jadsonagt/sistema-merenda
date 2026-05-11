@@ -2,6 +2,29 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 
 export class RotaController {
+  /**
+   * @swagger
+   * /api/rotas:
+   *   post:
+   *     summary: Cria uma nova rota de logística
+   *     tags: [Gestão de Rede]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - name
+   *             properties:
+   *               name:
+   *                 type: string
+   *     responses:
+   *       201:
+   *         description: Rota criada com sucesso
+   */
   async create(req: Request, res: Response) {
     try {
       const { name } = req.body;
@@ -23,6 +46,18 @@ export class RotaController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/rotas:
+   *   get:
+   *     summary: Lista todas as rotas de logística
+   *     tags: [Gestão de Rede]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Lista de rotas retornada com sucesso
+   */
   async list(req: Request, res: Response) {
     try {
       const rotas = await prisma.rota.findMany({
@@ -47,7 +82,7 @@ export class RotaController {
       }
 
       const rota = await prisma.rota.update({
-        where: { id },
+        where: { id: String(id) },
         data: { name },
       });
 
@@ -63,7 +98,7 @@ export class RotaController {
       const { id } = req.params;
 
       await prisma.rota.delete({
-        where: { id },
+        where: { id: String(id) },
       });
 
       return res.status(200).json({ message: 'Rota excluída com sucesso.' });

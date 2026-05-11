@@ -1,7 +1,41 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../lib/prisma.js';
 
 export class ItemController {
+  /**
+   * @swagger
+   * /api/items:
+   *   post:
+   *     summary: Cria um novo item no catálogo
+   *     tags: [Catálogo de Itens]
+   *     security:
+   *       - bearerAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - name
+   *               - base_unit
+   *               - packaging_size
+   *             properties:
+   *               name:
+   *                 type: string
+   *               base_unit:
+   *                 type: string
+   *                 description: "Unidade base (ex: KG, L, UN)"
+   *               packaging_size:
+   *                 type: number
+   *                 format: float
+   *                 description: "Tamanho da embalagem para fins logísticos (ex: 5.0)"
+   *     responses:
+   *       201:
+   *         description: Item criado com sucesso
+   *       400:
+   *         description: Parâmetros inválidos
+   */
   async create(req: Request, res: Response) {
     try {
       const { name, base_unit, packaging_size } = req.body;
@@ -25,6 +59,18 @@ export class ItemController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/items:
+   *   get:
+   *     summary: Lista todos os itens do catálogo
+   *     tags: [Catálogo de Itens]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Lista de itens retornada com sucesso
+   */
   async list(req: Request, res: Response) {
     try {
       const items = await prisma.item.findMany({
@@ -54,7 +100,7 @@ export class ItemController {
       }
 
       const item = await prisma.item.update({
-        where: { id },
+        where: { id: String(id) },
         data: {
           name,
           baseUnit,
@@ -74,7 +120,7 @@ export class ItemController {
       const { id } = req.params;
 
       await prisma.item.delete({
-        where: { id }
+        where: { id: String(id) }
       });
 
       return res.status(200).json({ message: 'Item excluído com sucesso.' });

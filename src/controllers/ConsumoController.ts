@@ -53,7 +53,7 @@ export class ConsumoController {
           const pacoteInteiroConsumido = Math.ceil(calculoConsumoRaw);
 
           if (pacoteInteiroConsumido > 0) {
-            const existingEstoque = await tx.estoqueAtual.findUnique({
+            const existingEstoque = await tx.estoque.findUnique({
               where: {
                 escolaId_itemId: {
                   escolaId: escola_id,
@@ -62,20 +62,20 @@ export class ConsumoController {
               },
             });
 
-            const currentQuantity = existingEstoque ? existingEstoque.quantityInteger : 0;
+            const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
             const newQuantity = currentQuantity - pacoteInteiroConsumido;
 
             if (existingEstoque) {
-              await tx.estoqueAtual.update({
+              await tx.estoque.update({
                 where: { id: existingEstoque.id },
-                data: { quantityInteger: newQuantity },
+                data: { quantidade: newQuantity },
               });
             } else {
-              await tx.estoqueAtual.create({
+              await tx.estoque.create({
                 data: {
                   escolaId: escola_id,
                   itemId: item.id,
-                  quantityInteger: newQuantity,
+                  quantidade: newQuantity,
                 },
               });
             }
@@ -174,7 +174,7 @@ export class ConsumoController {
 
       const consumoAtualizado = await prisma.consumoFixo.update({
         where: { id: String(id) },
-        data: { quantidade: Math.floor(Number(quantidade)) }
+        data: { quantidadeDiaria: Math.floor(Number(quantidade)) }
       });
 
       return res.status(200).json(consumoAtualizado);

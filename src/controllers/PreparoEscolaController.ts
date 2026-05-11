@@ -21,7 +21,7 @@ export class PreparoEscolaController {
       }
 
       // Validar que a escola existe
-      const escola = await prisma.escola.findUnique({ where: { id: escolaId } });
+      const escola = await prisma.escola.findUnique({ where: { id: String(escolaId) } });
       if (!escola) {
         return res.status(404).json({ error: 'Escola não encontrada.' });
       }
@@ -37,12 +37,12 @@ export class PreparoEscolaController {
         const preparoEscola = await tx.preparoEscola.upsert({
           where: {
             escolaId_fichaTecnicaId: {
-              escolaId,
+              escolaId: String(escolaId),
               fichaTecnicaId,
             },
           },
           create: {
-            escolaId,
+            escolaId: String(escolaId),
             fichaTecnicaId,
           },
           update: {
@@ -93,7 +93,7 @@ export class PreparoEscolaController {
       const { escolaId } = req.params;
 
       const preparos = await prisma.preparoEscola.findMany({
-        where: { escolaId },
+        where: { escolaId: String(escolaId) },
         include: {
           fichaTecnica: true,
           ingredientes: {
@@ -121,8 +121,8 @@ export class PreparoEscolaController {
       const preparo = await prisma.preparoEscola.findUnique({
         where: {
           escolaId_fichaTecnicaId: {
-            escolaId,
-            fichaTecnicaId,
+            escolaId: String(escolaId),
+            fichaTecnicaId: String(fichaTecnicaId),
           },
         },
         include: {
@@ -155,8 +155,8 @@ export class PreparoEscolaController {
       const preparo = await prisma.preparoEscola.findUnique({
         where: {
           escolaId_fichaTecnicaId: {
-            escolaId,
-            fichaTecnicaId,
+            escolaId: String(escolaId),
+            fichaTecnicaId: String(fichaTecnicaId),
           },
         },
       });
@@ -173,6 +173,79 @@ export class PreparoEscolaController {
     } catch (error) {
       console.error('Error deleting preparo:', error);
       return res.status(500).json({ error: 'Internal server error while deleting preparo.' });
+    }
+  }
+
+  /**
+   * Clonar todos os preparos de uma escola para outra.
+   * POST /api/escolas/:escolaId/clonar-preparos
+   * Body: { escolaOrigemId }
+   */
+  async clonarPreparos(req: Request, res: Response) {
+    try {
+      const { escolaId } = req.params; // Destino
+      const { escolaOrigemId } = req.body; // Origem
+
+      if (!escolaOrigemId) {
+        return res.status(400).json({ error: 'Campo escolaOrigemId é obrigatório.' });
+      }
+
+      if (escolaId === escolaOrigemId) {
+        return res.status(400).json({ error: 'Escola de origem e destino não podem ser a mesma.' });
+      }
+
+      // 1. Buscar todos os preparos da origem com ingredientes
+      const preparosOrigem = await prisma.preparoEscola.findMany({
+        where: { escolaId: escolaOrigemId },
+        include: { ingredientes: true }
+      });
+
+      if (preparosOrigem.length === 0) {
+        return res.status(400).json({ error: 'A escola de origem não possui preparos configurados para clonar.' });
+      }
+
+      // 2. Executar clonagem em transação
+      await prisma.$transaction(async (tx) => {
+        for (const p of preparosOrigem) {
+          // Upsert do PreparoEscola no destino
+          const preparoDestino = await tx.preparoEscola.upsert({
+            where: {
+              escolaId_fichaTecnicaId: {
+                escolaId: String(escolaId),
+                fichaTecnicaId: p.fichaTecnicaId
+              }
+            },
+            create: {
+              escolaId: String(escolaId),
+              fichaTecnicaId: p.fichaTecnicaId
+            },
+            update: {
+              updatedAt: new Date()
+            }
+          });
+
+          // Limpa ingredientes antigos do destino para este preparo
+          await tx.preparoIngrediente.deleteMany({
+            where: { preparoEscolaId: preparoDestino.id }
+          });
+
+          // Insere ingredientes clonados
+          if (p.ingredientes.length > 0) {
+            await tx.preparoIngrediente.createMany({
+              data: p.ingredientes.map(ing => ({
+                preparoEscolaId: preparoDestino.id,
+                itemId: ing.itemId,
+                quantidade: ing.quantidade
+              }))
+            });
+          }
+        }
+      });
+
+      return res.status(200).json({ message: `${preparosOrigem.length} preparos clonados com sucesso.` });
+    } catch (error) {
+      console.error('Error cloning preparos:', error);
+      return res.status(500).json({ error: 'Internal server error while cloning preparos.' });
     }
   }
 }
