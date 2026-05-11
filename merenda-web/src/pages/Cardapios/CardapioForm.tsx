@@ -72,9 +72,9 @@ export const CardapioForm: React.FC = () => {
 
     try {
       await createCardapio({
-        date: formattedDate,
-        fichaId: isFeriado ? undefined : fichaId,
-        is_feriado: isFeriado,
+        data_agendada: formattedDate,
+        ficha_tecnica_id: isFeriado ? null : fichaId,
+        isFeriado: isFeriado,
         tipos_escola: tiposEscola
       });
       navigate('/cardapios');

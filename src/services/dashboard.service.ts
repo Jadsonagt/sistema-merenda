@@ -33,20 +33,20 @@ export class DashboardService {
           }
         }
       }),
-      prisma.estoqueAtual.count({
-        where: { quantityInteger: { lte: 0 } }
+      prisma.estoque.count({
+        where: { quantidade: { lte: 0 } }
       })
     ]);
 
     // Cálculo do graficoVolume (Top 5 itens em estoque geral)
-    const volumeGroups = await prisma.estoqueAtual.groupBy({
+    const volumeGroups = await prisma.estoque.groupBy({
       by: ['itemId'],
       _sum: {
-        quantityInteger: true
+        quantidade: true
       },
       orderBy: {
         _sum: {
-          quantityInteger: 'desc'
+          quantidade: 'desc'
         }
       },
       take: 5
@@ -60,18 +60,18 @@ export class DashboardService {
     
     const graficoVolume = volumeGroups.map(v => ({
       name: itemsMap.get(v.itemId) || 'Desconhecido',
-      total: v._sum.quantityInteger || 0
+      total: v._sum.quantidade || 0
     }));
 
     // Cálculo do graficoStatus
-    const normalCount = await prisma.estoqueAtual.count({
-      where: { quantityInteger: { gt: 10 } }
+    const normalCount = await prisma.estoque.count({
+      where: { quantidade: { gt: 10 } }
     });
-    const baixoCount = await prisma.estoqueAtual.count({
-      where: { quantityInteger: { gt: 0, lte: 10 } }
+    const baixoCount = await prisma.estoque.count({
+      where: { quantidade: { gt: 0, lte: 10 } }
     });
-    const criticoCount = await prisma.estoqueAtual.count({
-      where: { quantityInteger: { lte: 0 } }
+    const criticoCount = await prisma.estoque.count({
+      where: { quantidade: { lte: 0 } }
     });
 
     const graficoStatus = [

@@ -23,14 +23,14 @@ export class PrevisaoComprasService {
     }
 
     // Busca o estoque atual da escola
-    const estoqueAtual = await prisma.estoqueAtual.findMany({
+    const estoqueResult = await prisma.estoque.findMany({
       where: { escolaId },
       include: { item: true }
     });
 
     const mapEstoque = new Map<string, { saldo: number; nome: string }>();
-    for (const est of estoqueAtual) {
-      mapEstoque.set(est.itemId, { saldo: est.quantityInteger, nome: est.item.name });
+    for (const est of estoqueResult) {
+      mapEstoque.set(est.itemId, { saldo: est.quantidade, nome: est.item.name });
     }
 
     // Busca cardápios no período indicado

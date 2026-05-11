@@ -327,7 +327,7 @@ export function Inventario() {
                                 <TableCell className="px-8 py-4 font-semibold text-slate-800">{item.name}</TableCell>
                                 <TableCell className="text-center">
                                   <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold uppercase tracking-wider">
-                                    {item.unidadeMedida || 'UN'}
+                                    {item.baseUnit || 'UN'}
                                   </span>
                                 </TableCell>
                                 <TableCell className="text-center font-medium text-slate-500">{teorico}</TableCell>
@@ -364,7 +364,7 @@ export function Inventario() {
                             <div className="flex justify-between items-start">
                               <h3 className="font-bold text-slate-800 text-base leading-tight flex-1">{item.name}</h3>
                               <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-[10px] font-black uppercase tracking-widest ml-2">
-                                {item.unidadeMedida || 'UN'}
+                                {item.baseUnit || 'UN'}
                               </span>
                             </div>
 
@@ -415,7 +415,7 @@ export function Inventario() {
                       <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
                         <Label className="text-xs text-slate-500 uppercase font-bold">Item Selecionado</Label>
                         <div className="font-bold text-slate-800 text-lg">{itemToDescarte.name}</div>
-                        <div className="text-sm text-slate-500">Saldo Atual: {estoqueAtual[itemToDescarte.id] || 0} {itemToDescarte.unidadeMedida || 'UN'}</div>
+                        <div className="text-sm text-slate-500">Saldo Atual: {estoqueAtual[itemToDescarte.id] || 0} {itemToDescarte.baseUnit || 'UN'}</div>
                       </div>
 
                       <div className="space-y-2">

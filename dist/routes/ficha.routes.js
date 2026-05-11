@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { FichaTecnicaController } from '../controllers/FichaTecnicaController.js';
+import { verificarToken, permitirRoles } from '../middlewares/authMiddleware.js';
+const fichaRoutes = Router();
+const fichaController = new FichaTecnicaController();
+fichaRoutes.post('/', verificarToken, permitirRoles(['ADMIN']), fichaController.create);
+fichaRoutes.get('/', verificarToken, permitirRoles(['ADMIN']), fichaController.list);
+fichaRoutes.put('/:id', verificarToken, permitirRoles(['ADMIN']), fichaController.update);
+fichaRoutes.delete('/:id', verificarToken, permitirRoles(['ADMIN']), fichaController.delete);
+export { fichaRoutes };

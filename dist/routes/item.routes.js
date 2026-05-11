@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { ItemController } from '../controllers/ItemController.js';
+import { verificarToken, permitirRoles } from '../middlewares/authMiddleware.js';
+const itemRoutes = Router();
+const itemController = new ItemController();
+itemRoutes.post('/', verificarToken, permitirRoles(['ADMIN']), itemController.create);
+itemRoutes.get('/', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), itemController.list);
+itemRoutes.put('/:id', verificarToken, permitirRoles(['ADMIN']), itemController.update);
+itemRoutes.delete('/:id', verificarToken, permitirRoles(['ADMIN']), itemController.delete);
+export { itemRoutes };

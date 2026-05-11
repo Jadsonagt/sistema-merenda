@@ -1,9 +1,10 @@
 import { api } from '../api';
 
 export interface Item {
-  unidadeMedida: string;
   id: string;
   name: string;
+  baseUnit: string;
+  packagingSize: number;
 }
 
 const getHeaders = () => {

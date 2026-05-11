@@ -58,8 +58,8 @@ export class ConsumoService {
             });
 
             for (const fixo of consumosFixos) {
-              if (fixo.quantidade > 0) {
-                const existingEstoque = await tx.estoqueAtual.findUnique({
+              if (fixo.quantidadeDiaria > 0) {
+                const existingEstoque = await tx.estoque.findUnique({
                   where: {
                     escolaId_itemId: {
                       escolaId: escola.id,
@@ -68,8 +68,8 @@ export class ConsumoService {
                   },
                 });
 
-                const currentQuantity = existingEstoque ? existingEstoque.quantityInteger : 0;
-                const novoSaldo = currentQuantity - fixo.quantidade;
+                const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
+                const novoSaldo = currentQuantity - fixo.quantidadeDiaria;
 
                 if (novoSaldo < 0) {
                   throw new Error(JSON.stringify({
@@ -84,16 +84,16 @@ export class ConsumoService {
                 }
 
                 if (existingEstoque) {
-                  await tx.estoqueAtual.update({
+                  await tx.estoque.update({
                     where: { id: existingEstoque.id },
-                    data: { quantityInteger: novoSaldo },
+                    data: { quantidade: novoSaldo },
                   });
                 } else {
-                  await tx.estoqueAtual.create({
+                  await tx.estoque.create({
                     data: {
                       escolaId: escola.id,
                       itemId: fixo.itemId,
-                      quantityInteger: novoSaldo,
+                      quantidade: novoSaldo,
                     },
                   });
                 }
@@ -103,7 +103,7 @@ export class ConsumoService {
                     escolaId: escola.id,
                     itemId: fixo.itemId,
                     type: MovimentacaoType.CONSUMPTION, // CORRIGIDO! Sem numeroGuia alucinado.
-                    quantity: fixo.quantidade,
+                    quantity: Math.floor(fixo.quantidadeDiaria),
                   },
                 });
 
@@ -111,7 +111,7 @@ export class ConsumoService {
                   tipo: "Consumo Fixo",
                   escolaId: escola.id,
                   itemId: fixo.itemId,
-                  pacotesFisicosAbatidos: fixo.quantidade,
+                  pacotesFisicosAbatidos: fixo.quantidadeDiaria,
                   saldoFinal: novoSaldo
                 });
               }
@@ -147,7 +147,7 @@ export class ConsumoService {
             const pacoteInteiroConsumido = Math.ceil(consumoTeorico);
 
             if (pacoteInteiroConsumido > 0) {
-              const existingEstoque = await tx.estoqueAtual.findUnique({
+              const existingEstoque = await tx.estoque.findUnique({
                 where: {
                   escolaId_itemId: {
                     escolaId: escola.id,
@@ -156,7 +156,7 @@ export class ConsumoService {
                 },
               });
 
-              const currentQuantity = existingEstoque ? existingEstoque.quantityInteger : 0;
+              const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
               const newQuantity = currentQuantity - pacoteInteiroConsumido;
 
               if (newQuantity < 0) {
@@ -172,16 +172,16 @@ export class ConsumoService {
               }
 
               if (existingEstoque) {
-                await tx.estoqueAtual.update({
+                await tx.estoque.update({
                   where: { id: existingEstoque.id },
-                  data: { quantityInteger: newQuantity },
+                  data: { quantidade: newQuantity },
                 });
               } else {
-                await tx.estoqueAtual.create({
+                await tx.estoque.create({
                   data: {
                     escolaId: escola.id,
                     itemId: item.id,
-                    quantityInteger: newQuantity,
+                    quantidade: newQuantity,
                   },
                 });
               }
