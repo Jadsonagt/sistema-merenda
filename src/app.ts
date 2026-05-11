@@ -29,6 +29,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Endpoint de Health Check (útil para manter o Render acordado)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'OK', uptime: process.uptime() });
+});
+
 // Rotas da Documentação
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
