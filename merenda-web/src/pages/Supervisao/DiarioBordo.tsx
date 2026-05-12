@@ -688,7 +688,12 @@ export const DiarioBordo: React.FC = () => {
       </div>
 
       <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
-        <DialogContent className="sm:max-w-[500px] bg-white p-0 overflow-hidden shadow-2xl border-none">
+        <DialogContent 
+          className="sm:max-w-[500px] bg-white p-0 overflow-hidden shadow-2xl border-none"
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           {selectedDate && (
             <div className="flex flex-col h-full max-h-[90vh]">
               <RoteiroForm 
@@ -737,7 +742,12 @@ export const DiarioBordo: React.FC = () => {
       </Dialog>
 
       <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
-        <DialogContent className="sm:max-w-[450px] bg-white border-none p-0 overflow-hidden shadow-2xl rounded-2xl">
+        <DialogContent 
+          className="sm:max-w-[450px] bg-white border-none p-0 overflow-hidden shadow-2xl rounded-2xl"
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
           <DialogHeader className="bg-slate-900 text-white p-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <MapPin className="h-5 w-5 text-blue-400" />
