@@ -19,7 +19,8 @@ import {
   Menu,
   X,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  MapPin
 } from 'lucide-react';
 import { Toaster } from '@/components/ui/toaster';
 import { useState, useEffect, useMemo } from 'react';
@@ -144,6 +145,10 @@ export const AppLayout: React.FC = () => {
           <NavLink to="/rotas" className={navItemClasses} onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}>
             <Map className="h-5 w-5" />
             <span className="text-sm font-medium">Rotas de Entrega</span>
+          </NavLink>
+          <NavLink to="/pontos-interesse" className={navItemClasses} onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}>
+            <MapPin className="h-5 w-5" />
+            <span className="text-sm font-medium">Pontos de Interesse</span>
           </NavLink>
 
           <SectionLabel>Planejamento</SectionLabel>

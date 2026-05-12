@@ -22,6 +22,7 @@ import { diarioRoutes } from './routes/diario.routes.js';
 import { dietaRoutes } from './routes/dieta.routes.js';
 import { relatorioRoutes } from './routes/relatorio.routes.js';
 import { usuarioRoutes } from './routes/usuario.routes.js';
+import pontoInteresseRoutes from './routes/pontoInteresse.routes.js';
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.use('/api', diarioRoutes);
 app.use('/api', dietaRoutes);
 app.use('/api/relatorios', relatorioRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/pontos-interesse', pontoInteresseRoutes);
 
 // Middleware Global de Tratamento de Erros
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

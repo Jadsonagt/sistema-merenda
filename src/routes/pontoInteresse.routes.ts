@@ -1,0 +1,13 @@
+import { Router } from 'express';
+import { PontoInteresseController } from '../controllers/PontoInteresseController.js';
+import { verificarToken, permitirRoles } from '../middlewares/authMiddleware.js';
+
+const router = Router();
+const controller = new PontoInteresseController();
+
+router.get('/', verificarToken, controller.index);
+router.post('/', verificarToken, permitirRoles(['ADMIN']), controller.store);
+router.put('/:id', verificarToken, permitirRoles(['ADMIN']), controller.update);
+router.delete('/:id', verificarToken, permitirRoles(['ADMIN']), controller.delete);
+
+export default router;

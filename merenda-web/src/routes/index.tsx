@@ -22,6 +22,7 @@ import { DiarioBordo } from '../pages/Supervisao/DiarioBordo';
 import { Perfil } from '../pages/Configuracoes/Perfil';
 import { GestaoDietas } from '../pages/GestaoDietas';
 import { UsuariosPage } from '../pages/Configuracoes/Usuarios';
+import { PontosInteressePage } from '../pages/Rede/PontosInteresse';
 
 export const AppRoutes = () => {
   return (
@@ -51,6 +52,7 @@ export const AppRoutes = () => {
           <Route path="/dietas" element={<GestaoDietas />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/usuarios" element={<UsuariosPage />} />
+          <Route path="/pontos-interesse" element={<PontosInteressePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

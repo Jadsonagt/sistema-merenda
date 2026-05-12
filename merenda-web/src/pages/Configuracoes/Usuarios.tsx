@@ -153,83 +153,133 @@ export const UsuariosPage = () => {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <Users className="h-8 w-8 text-blue-600" />
+    <div className="p-4 sm:p-8 w-full max-w-6xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-3">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             Gestão de Usuários
           </h1>
-          <p className="text-slate-500 mt-1 text-sm font-medium">Controle de acessos e permissões do sistema.</p>
+          <p className="text-slate-500 mt-1 text-xs sm:text-sm font-medium">Controle de acessos e permissões do sistema.</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-lg shadow-blue-500/20">
+        <Button onClick={() => handleOpenModal()} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 shadow-lg shadow-blue-500/20">
           <UserPlus className="mr-2 h-5 w-5" /> Novo Usuário
         </Button>
       </div>
 
-      <Card className="shadow-md border-slate-200 overflow-hidden bg-white">
-        <CardContent className="p-0">
+      <div className="shadow-md border-slate-200 overflow-hidden bg-transparent sm:bg-white sm:rounded-xl">
+        <div className="p-0">
           {loading ? (
-            <div className="py-20 text-center flex flex-col items-center gap-3">
+            <div className="py-20 text-center flex flex-col items-center gap-3 bg-white rounded-xl">
               <div className="h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               <span className="text-slate-400 font-medium">Buscando usuários...</span>
             </div>
           ) : (
-            <Table>
-              <TableHeader className="bg-slate-50/80">
-                <TableRow>
-                  <TableHead className="font-bold text-slate-700 px-8 py-4 h-14">Usuário</TableHead>
-                  <TableHead className="font-bold text-slate-700 h-14 text-center">E-mail</TableHead>
-                  <TableHead className="font-bold text-slate-700 h-14 text-center">Cargo / Role</TableHead>
-                  <TableHead className="font-bold text-slate-700 text-right px-8 h-14">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile Card List */}
+              <div className="grid grid-cols-1 gap-4 sm:hidden px-0">
                 {usuarios.map((u) => (
-                  <TableRow key={u.id} className="hover:bg-slate-50/50 transition-all">
-                    <TableCell className="px-8 py-5">
+                  <div key={u.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4 animate-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-lg font-black shrink-0">
                           {u.nome.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-bold text-slate-800">{u.nome}</span>
+                        <div className="space-y-0.5">
+                          <h3 className="font-bold text-slate-900 leading-tight">{u.nome}</h3>
+                          <p className="text-xs font-medium text-slate-500 break-all">{u.email}</p>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-center text-slate-500 font-medium">{u.email}</TableCell>
-                    <TableCell className="text-center">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 ${
                         u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                       }`}>
                         {u.role}
                       </span>
-                    </TableCell>
-                    <TableCell className="text-right px-8 py-5">
-                      <div className="flex justify-end gap-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-9 px-3 text-slate-600 hover:text-blue-600 hover:bg-blue-50 border-slate-200"
-                          onClick={() => handleOpenModal(u)}
-                        >
-                          <Pencil className="h-4 w-4 mr-2" /> Editar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-9 px-3 text-slate-400 hover:text-red-600 hover:bg-red-50 border-slate-200"
-                          onClick={() => handleDelete(u.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    
+                    <div className="pt-4 border-t border-slate-100 flex gap-3">
+                      <Button
+                        variant="outline"
+                        className="flex-1 h-11 text-slate-600 font-bold border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                        onClick={() => handleOpenModal(u)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" /> Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-12 h-11 text-slate-400 border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
+                        onClick={() => handleDelete(u.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden sm:block overflow-x-auto w-full">
+                <Table>
+                  <TableHeader className="bg-slate-50/80">
+                    <TableRow>
+                      <TableHead className="font-bold text-slate-700 px-8 py-4 h-14">Usuário</TableHead>
+                      <TableHead className="font-bold text-slate-700 h-14 text-center">E-mail</TableHead>
+                      <TableHead className="font-bold text-slate-700 h-14 text-center">Cargo / Role</TableHead>
+                      <TableHead className="font-bold text-slate-700 text-right px-8 h-14">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {usuarios.map((u) => (
+                      <TableRow key={u.id} className="hover:bg-slate-50/50 transition-all">
+                        <TableCell className="px-8 py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
+                              {u.nome.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-bold text-slate-800">{u.nome}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center text-slate-500 font-medium">
+                          <div className="truncate max-w-[240px] mx-auto" title={u.email}>
+                            {u.email}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {u.role}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right px-8 py-5">
+                          <div className="flex justify-end gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 px-3 text-slate-600 hover:text-blue-600 hover:bg-blue-50 border-slate-200"
+                              onClick={() => handleOpenModal(u)}
+                            >
+                              <Pencil className="h-4 w-4 mr-2" /> Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-9 px-3 text-slate-400 hover:text-red-600 hover:bg-red-50 border-slate-200"
+                              onClick={() => handleDelete(u.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">

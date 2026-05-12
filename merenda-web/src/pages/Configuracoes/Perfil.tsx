@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Home, Save, Map } from 'lucide-react';
+import { User, Home, Save, Map, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '../../services/api';
 
@@ -47,6 +47,32 @@ export const Perfil: React.FC = () => {
       console.error('Erro ao buscar perfil:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const abrirGoogleMaps = (endereco: string) => {
+    if (!endereco.trim()) {
+      toast({ variant: "destructive", title: "Atenção", description: "Digite um endereço para pesquisar." });
+      return;
+    }
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleSmartPaste = (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData('text');
+    if (text.includes(',')) {
+      e.preventDefault();
+      const parts = text.split(',');
+      const lat = parts[0].trim();
+      const lon = parts[1].trim();
+      setLatitudeResidencial(lat);
+      setLongitudeResidencial(lon);
+      toast({ 
+        className: "bg-emerald-50 text-emerald-900 border-emerald-200", 
+        title: "Smart Paste", 
+        description: "Coordenadas extraídas e distribuídas." 
+      });
     }
   };
 
@@ -144,27 +170,39 @@ export const Perfil: React.FC = () => {
                 <Home className="h-4 w-4 text-blue-500" />
                 Endereço Residencial (Ponto de Partida)
               </Label>
-              <Input
-                placeholder="Rua, Número, Bairro, Cidade..."
-                value={enderecoResidencial}
-                onChange={e => setEnderecoResidencial(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Rua, Número, Bairro, Cidade..."
+                  value={enderecoResidencial}
+                  onChange={e => setEnderecoResidencial(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  className="shrink-0 border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => abrirGoogleMaps(enderecoResidencial)}
+                  title="Pesquisar no Google Maps"
+                >
+                  <MapPin className="h-4 w-4" />
+                </Button>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
                   <Label className="text-[10px] font-bold uppercase text-slate-500">Latitude</Label>
                   <Input
-                    type="number"
-                    step="any"
+                    type="text"
                     placeholder="-23.5505..."
                     value={latitudeResidencial}
                     onChange={e => setLatitudeResidencial(e.target.value)}
+                    onPaste={handleSmartPaste}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label className="text-[10px] font-bold uppercase text-slate-500">Longitude</Label>
                   <Input
-                    type="number"
-                    step="any"
+                    type="text"
                     placeholder="-46.6333..."
                     value={longitudeResidencial}
                     onChange={e => setLongitudeResidencial(e.target.value)}

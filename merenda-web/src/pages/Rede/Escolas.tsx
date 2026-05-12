@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Trash2, Plus, School, UtensilsCrossed } from 'lucide-react';
+import { Pencil, Trash2, Plus, School, UtensilsCrossed, Search, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '../../services/api';
 import { PreparosPanel } from './PreparosPanel';
@@ -70,6 +70,39 @@ export const Escolas: React.FC = () => {
 
   // Preparos
   const [escolaPreparos, setEscolaPreparos] = useState<Escola | null>(null);
+
+  const abrirGoogleMaps = (endereco: string) => {
+    if (!endereco.trim()) {
+      toast({ variant: "destructive", title: "Atenção", description: "Digite um endereço para pesquisar." });
+      return;
+    }
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+    window.open(url, '_blank');
+  };
+
+  const handleSmartPaste = (e: React.ClipboardEvent, type: 'create' | 'edit') => {
+    const text = e.clipboardData.getData('text');
+    if (text.includes(',')) {
+      e.preventDefault();
+      const parts = text.split(',');
+      const lat = parts[0].trim();
+      const lon = parts[1].trim();
+      
+      if (type === 'create') {
+        setNewLatitude(lat);
+        setNewLongitude(lon);
+      } else {
+        setEditLatitude(lat);
+        setEditLongitude(lon);
+      }
+      
+      toast({ 
+        className: "bg-emerald-50 text-emerald-900 border-emerald-200", 
+        title: "Smart Paste", 
+        description: "Coordenadas extraídas e distribuídas." 
+      });
+    }
+  };
 
   const { toast } = useToast();
 
@@ -464,12 +497,30 @@ export const Escolas: React.FC = () => {
             </div>
             <div className="flex flex-col gap-2">
               <Label className="text-slate-900 dark:text-slate-200 font-semibold">Endereço Completo</Label>
-              <Input placeholder="Rua, Número, Bairro..." value={newEndereco} onChange={(e) => setNewEndereco(e.target.value)} />
+              <div className="flex gap-2">
+                <Input placeholder="Rua, Número, Bairro..." value={newEndereco} onChange={(e) => setNewEndereco(e.target.value)} className="flex-1" />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  className="shrink-0 border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => abrirGoogleMaps(newEndereco)}
+                  title="Pesquisar no Google Maps"
+                >
+                  <MapPin className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label className="text-slate-900 dark:text-slate-200 font-semibold">Latitude</Label>
-                <Input type="number" step="any" placeholder="-23.5505" value={newLatitude} onChange={(e) => setNewLatitude(e.target.value)} />
+                <Input 
+                  type="text" 
+                  placeholder="-23.5505" 
+                  value={newLatitude} 
+                  onChange={(e) => setNewLatitude(e.target.value)} 
+                  onPaste={(e) => handleSmartPaste(e, 'create')}
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-slate-900 dark:text-slate-200 font-semibold">Longitude</Label>
@@ -533,12 +584,29 @@ export const Escolas: React.FC = () => {
             </div>
             <div className="flex flex-col gap-2">
               <Label className="text-slate-900 dark:text-slate-200 font-semibold">Endereço Completo</Label>
-              <Input value={editEndereco} onChange={(e) => setEditEndereco(e.target.value)} />
+              <div className="flex gap-2">
+                <Input value={editEndereco} onChange={(e) => setEditEndereco(e.target.value)} className="flex-1" />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  className="shrink-0 border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => abrirGoogleMaps(editEndereco)}
+                  title="Pesquisar no Google Maps"
+                >
+                  <MapPin className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <Label className="text-slate-900 dark:text-slate-200 font-semibold">Latitude</Label>
-                <Input type="number" step="any" value={editLatitude} onChange={(e) => setEditLatitude(e.target.value)} />
+                <Input 
+                  type="text" 
+                  value={editLatitude} 
+                  onChange={(e) => setEditLatitude(e.target.value)} 
+                  onPaste={(e) => handleSmartPaste(e, 'edit')}
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <Label className="text-slate-900 dark:text-slate-200 font-semibold">Longitude</Label>
