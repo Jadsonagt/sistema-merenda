@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import {
-  Plus, Trash2, MapPin,
+  Plus, Trash2, MapPin, Map as MapIcon,
   ChevronRight, FileSpreadsheet,
   ChevronLeft, CalendarDays,
   ShieldPlus
@@ -51,6 +51,8 @@ interface Trecho {
   pontoId: string;
   pontoNome: string;
   km: number;
+  lat?: number;
+  lon?: number;
 }
 
 interface Escola {
@@ -290,6 +292,9 @@ export const DiarioBordo: React.FC = () => {
 
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [manualName, setManualName] = useState('');
+  const [manualEndereco, setManualEndereco] = useState('');
+  const [manualLat, setManualLat] = useState('');
+  const [manualLon, setManualLon] = useState('');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportInicio, setExportInicio] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'));
   const [exportFim, setExportFim] = useState(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
@@ -398,11 +403,21 @@ export const DiarioBordo: React.FC = () => {
         ordem: t.ordem,
         pontoId: 'LEGACY_' + t.pontoNome,
         pontoNome: t.pontoNome,
-        km: t.kmTrecho
+        km: t.kmTrecho,
+        lat: undefined, // Legacy data might not have coords
+        lon: undefined
       })) || []);
     } else {
       if (userProfile?.latitudeResidencial) {
-        setTrechos([{ id: 'start-' + Date.now(), ordem: 1, pontoId: 'RESIDENCIA_ME', pontoNome: 'Minha Residência', km: 0 }]);
+        setTrechos([{ 
+          id: 'start-' + Date.now(), 
+          ordem: 1, 
+          pontoId: 'RESIDENCIA_ME', 
+          pontoNome: 'Minha Residência', 
+          km: 0,
+          lat: userProfile.latitudeResidencial,
+          lon: userProfile.longitudeResidencial
+        }]);
       } else {
         setTrechos([]);
       }
@@ -426,12 +441,20 @@ export const DiarioBordo: React.FC = () => {
     executeAddParada(value, nome);
   };
 
-  const executeAddParada = async (id: string, nome: string) => {
+  const executeAddParada = async (id: string, nome: string, lat?: string, lon?: string) => {
     const ultimo = trechos.length > 0 ? trechos[trechos.length - 1] : null;
     let kmSugerido = 0;
     if (ultimo) {
       try {
-        const res = await api.post('/supervisao/calcular-distancia', { origemId: ultimo.pontoId, destinoId: id }, getHeaders());
+        const payload = { 
+          origemId: ultimo.pontoId, 
+          destinoId: id,
+          origemManual: (ultimo.pontoId.startsWith('MANUAL_') || ultimo.pontoId === 'RESIDENCIA_ME') ? { lat: ultimo.lat, lon: ultimo.lon } : null,
+          destinoManual: id.startsWith('MANUAL_') ? { lat: parseFloat(lat || '0'), lon: parseFloat(lon || '0') } : null
+        };
+        console.log('[DiarioBordo] Payload para cálculo:', payload);
+        const res = await api.post('/supervisao/calcular-distancia', payload, getHeaders());
+        console.log('[DiarioBordo] Resposta cálculo:', res.data);
         kmSugerido = res.data.km || 0;
       } catch (error) { console.warn('Falha OSRM:', error); }
     }
@@ -440,8 +463,25 @@ export const DiarioBordo: React.FC = () => {
       ordem: trechos.length + 1, 
       pontoId: id, 
       pontoNome: nome, 
-      km: kmSugerido 
+      km: kmSugerido,
+      lat: lat ? parseFloat(lat) : undefined,
+      lon: lon ? parseFloat(lon) : undefined
     }]);
+  };
+
+  const handleManualSmartPaste = (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData('text');
+    if (text.includes(',')) {
+      e.preventDefault();
+      const parts = text.split(',');
+      setManualLat(parts[0].trim());
+      setManualLon(parts[1].trim());
+      toast({ 
+        className: "bg-emerald-50 text-emerald-900 border-emerald-200", 
+        title: "Smart Paste", 
+        description: "Coordenadas extraídas." 
+      });
+    }
   };
 
   const handleUpdateKm = (idx: number, val: number) => {
@@ -697,15 +737,91 @@ export const DiarioBordo: React.FC = () => {
       </Dialog>
 
       <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
-        <DialogContent className="sm:max-w-[400px] bg-white border shadow-2xl">
-          <DialogHeader><DialogTitle>Destino Manual</DialogTitle></DialogHeader>
-          <div className="py-4">
-            <Label>Nome do Local</Label>
-            <Input autoFocus className="mt-2" placeholder="Ex: Posto..." value={manualName} onChange={e => setManualName(e.target.value)} onKeyDown={e => e.key === 'Enter' && (executeAddParada('MANUAL_'+Date.now(), manualName), setManualName(''), setIsManualModalOpen(false))} />
+        <DialogContent className="sm:max-w-[450px] bg-white border-none p-0 overflow-hidden shadow-2xl rounded-2xl">
+          <DialogHeader className="bg-slate-900 text-white p-6">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-400" />
+              Destino Manual
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Adicione uma parada personalizada ao seu roteiro.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="p-6 space-y-4 bg-white">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Nome do Local</Label>
+              <Input 
+                autoFocus 
+                placeholder="Ex: Posto, Cartório, Oficina..." 
+                value={manualName} 
+                onChange={e => setManualName(e.target.value)} 
+                className="h-11 bg-slate-50 border-slate-200"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Endereço (Opcional)</Label>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Rua, Número..." 
+                  value={manualEndereco} 
+                  onChange={e => setManualEndereco(e.target.value)} 
+                  className="h-11 bg-slate-50 border-slate-200 flex-1"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  className="shrink-0 h-11 w-11 border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(manualEndereco || manualName)}`, '_blank')}
+                  title="Pesquisar no Google Maps"
+                >
+                  <MapIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Latitude</Label>
+                <Input 
+                  placeholder="-23.5..." 
+                  value={manualLat} 
+                  onChange={e => setManualLat(e.target.value)} 
+                  onPaste={handleManualSmartPaste}
+                  className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Longitude</Label>
+                <Input 
+                  placeholder="-46.6..." 
+                  value={manualLon} 
+                  onChange={e => setManualLon(e.target.value)} 
+                  className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
+                />
+              </div>
+            </div>
+            
+            <p className="text-[10px] text-amber-600 font-bold uppercase leading-tight bg-amber-50 p-2 rounded border border-amber-100">
+              Dica: Cole as coordenadas completas na Latitude para preencher ambos.
+            </p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsManualModalOpen(false)}>Cancelar</Button>
-            <Button className="bg-blue-600 text-white" onClick={() => {executeAddParada('MANUAL_'+Date.now(), manualName); setManualName(''); setIsManualModalOpen(false);}}>Adicionar</Button>
+
+          <DialogFooter className="p-6 bg-slate-50 border-t flex flex-row gap-3">
+            <Button variant="ghost" onClick={() => setIsManualModalOpen(false)} className="flex-1 font-bold text-slate-500">Cancelar</Button>
+            <Button 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold" 
+              onClick={() => {
+                executeAddParada('MANUAL_'+Date.now(), manualName, manualLat, manualLon); 
+                setManualName(''); setManualEndereco(''); setManualLat(''); setManualLon(''); 
+                setIsManualModalOpen(false);
+              }}
+              disabled={!manualName}
+            >
+              Adicionar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

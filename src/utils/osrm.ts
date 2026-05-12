@@ -9,6 +9,7 @@ export async function calcularDistanciaOSRM(origem: Coordenada, destino: Coorden
   try {
     // OSRM exige a ordem: longitude,latitude
     const url = `http://router.project-osrm.org/route/v1/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?overview=false`;
+    console.log('[OSRM] Chamando API:', url);
     
     const response = await axios.get(url);
     
