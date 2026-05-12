@@ -124,11 +124,15 @@ export class DiarioBordoController {
         }
       }
 
-      const getCoords = async (id: string, manualCoords?: { lat: number, lon: number }) => {
-        // Se já temos coordenadas manuais enviadas, priorizamos elas
-        if (manualCoords && typeof manualCoords.lat === 'number' && typeof manualCoords.lon === 'number' && !isNaN(manualCoords.lat)) {
-          console.log(`[DiarioBordo] Usando coordenadas manuais para ${id}:`, manualCoords);
-          return { lat: manualCoords.lat, lng: manualCoords.lon };
+      const getCoords = async (id: string, manualCoords?: any) => {
+        if (manualCoords) {
+          const lat = Number(manualCoords.latitude ?? manualCoords.lat);
+          const lng = Number(manualCoords.longitude ?? manualCoords.lon ?? manualCoords.lng);
+          
+          if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            console.log(`[DiarioBordo] Usando coordenadas manuais para ${id}:`, { lat, lng });
+            return { lat, lng };
+          }
         }
 
         // 1. Tratamento da Residência
