@@ -196,7 +196,7 @@ export const PontosInteressePage = () => {
         </Button>
       </div>
 
-      <div className="shadow-md border-slate-200 overflow-hidden bg-transparent sm:bg-white sm:rounded-xl">
+      <div className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-slate-200 overflow-hidden">
         <div className="p-0">
           {loading ? (
             <div className="py-20 text-center flex flex-col items-center gap-3 bg-white rounded-xl">
@@ -247,7 +247,7 @@ export const PontosInteressePage = () => {
               {/* Desktop Table */}
               <div className="hidden sm:block overflow-x-auto w-full">
                 <Table>
-                  <TableHeader className="bg-slate-50/80">
+                  <TableHeader className="bg-slate-50/80 border-b border-slate-200">
                     <TableRow>
                       <TableHead className="font-bold text-slate-700 px-8 py-4 h-14">Local</TableHead>
                       <TableHead className="font-bold text-slate-700 h-14 text-center">Tipo</TableHead>

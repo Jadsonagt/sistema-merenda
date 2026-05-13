@@ -336,8 +336,8 @@ export const Escolas: React.FC = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border-slate-200">
-        <CardHeader>
+      <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-slate-200 overflow-hidden">
+        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
           <CardTitle className="text-xl text-slate-700">Escolas Cadastradas</CardTitle>
           <CardDescription>Unidades escolares vinculadas às rotas de entrega.</CardDescription>
         </CardHeader>
@@ -349,7 +349,7 @@ export const Escolas: React.FC = () => {
               {/* Visualização em Tabela (Desktop) */}
               <div className="hidden md:block">
                 <Table>
-                  <TableHeader className="bg-slate-50">
+                  <TableHeader className="bg-slate-50/80 border-b border-slate-200">
                     <TableRow>
                       <TableHead className="font-semibold text-slate-700 px-6 py-4">Nome da Escola</TableHead>
                       <TableHead className="font-semibold text-slate-700 px-6 py-4">Tipo</TableHead>
