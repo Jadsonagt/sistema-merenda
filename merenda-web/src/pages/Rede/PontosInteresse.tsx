@@ -6,7 +6,6 @@ import {
   Trash2, 
   Map as MapIcon, 
   Navigation,
-  Search,
   Building2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,7 +34,6 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import {
   getPontosInteresse,

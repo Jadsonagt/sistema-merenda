@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Pencil, Trash2, Plus, School, UtensilsCrossed, Search, MapPin } from 'lucide-react';
+import { Pencil, Trash2, Plus, School, UtensilsCrossed, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '../../services/api';
 import { PreparosPanel } from './PreparosPanel';
