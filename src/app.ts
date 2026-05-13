@@ -1,3 +1,4 @@
+// Trigger: Forando novo build para sincronizao - 2026-05-13
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
