@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ShieldPlus, Apple, School, Save, Trash2, Plus } from 'lucide-react';
+import { ShieldPlus, Apple, School, Save, Trash2, Plus, Route, Search, ChevronsUpDown, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '../../services/api';
 
@@ -14,23 +15,53 @@ export const GestaoDietas: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ESCOLAS' | 'CATALOGO'>('ESCOLAS');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [escolas, setEscolas] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tiposDieta, setTiposDieta] = useState<any[]>([]);
+  const [rotas, setRotas] = useState<any[]>([]);
+  const [filtroRota, setFiltroRota] = useState<string>('todas');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
   const [escolaSelecionada, setEscolaSelecionada] = useState<string>('');
   const [quantidades, setQuantidades] = useState<Record<string, number | string>>({});
   const [novoTipoNome, setNovoTipoNome] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (escolaSelecionada) {
+      const escola = escolas.find(e => e.id === escolaSelecionada);
+      if (escola && filtroRota !== 'todas' && escola.rotaId !== filtroRota) {
+        setEscolaSelecionada('');
+        setQuantidades({});
+      }
+    }
+  }, [filtroRota, escolas, escolaSelecionada]);
+
   const carregarDadosBase = async () => {
     try {
-      const [escRes, tiposRes] = await Promise.all([
+      const [escRes, tiposRes, rotasRes] = await Promise.all([
         api.get('/escolas', getHeaders()),
-        api.get('/dietas/tipos', getHeaders())
+        api.get('/dietas/tipos', getHeaders()),
+        api.get('/rotas', getHeaders())
       ]);
       setEscolas(escRes.data || []);
       setTiposDieta(tiposRes.data || []);
+      setRotas(rotasRes.data || []);
+
+      // Recuperar usuário e definir rota inicial
+      const storedUser = localStorage.getItem('usuario');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.rotaId) {
+          setFiltroRota(parsedUser.rotaId);
+        }
+      } else {
+        // Se não tiver no storage, busca na API
+        const meRes = await api.get('/auth/me', getHeaders());
+        localStorage.setItem('usuario', JSON.stringify(meRes.data));
+        if (meRes.data.rotaId) {
+          setFiltroRota(meRes.data.rotaId);
+        }
+      }
     } catch (error) {
       toast({ variant: "destructive", title: "Erro", description: "Falha ao carregar dados base." });
     }
@@ -131,18 +162,103 @@ export const GestaoDietas: React.FC = () => {
 
       {activeTab === 'ESCOLAS' && (
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-xl border shadow-sm">
-            <div className="max-w-md space-y-2">
-              <Label className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Selecione a Unidade Escolar</Label>
-              <Select value={escolaSelecionada} onValueChange={carregarDemandasEscola}>
-                <SelectTrigger className="border-rose-200 focus:ring-rose-500 shadow-sm">
-                  <School className="w-4 h-4 mr-2 text-rose-500" />
-                  <SelectValue placeholder="Escolha uma escola..." />
+          <div className="bg-white p-6 rounded-xl border shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Filtrar por Rota</Label>
+              <Select value={filtroRota} onValueChange={(val) => {
+                setFiltroRota(val);
+                setSearchTerm('');
+              }}>
+                <SelectTrigger className="border-slate-200 focus:ring-rose-500 shadow-sm h-11">
+                  <Route className="w-4 h-4 mr-2 text-slate-400" />
+                  <SelectValue placeholder="Todas as Rotas" />
                 </SelectTrigger>
-                <SelectContent>
-                  {escolas.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                <SelectContent className="bg-white border shadow-xl">
+                  <SelectItem value="todas">Todas as Rotas</SelectItem>
+                  {rotas.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2 relative">
+              <Label className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Selecione a Unidade Escolar</Label>
+              
+              {/* Combobox Searchable */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(!isOpen)}
+                  className={cn(
+                    "flex h-11 w-full items-center justify-between rounded-md border border-rose-200 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500",
+                    !escolaSelecionada && "text-slate-500"
+                  )}
+                >
+                  <div className="flex items-center overflow-hidden">
+                    <School className="w-4 h-4 mr-2 text-rose-500 shrink-0" />
+                    <span className="truncate">
+                      {escolaSelecionada 
+                        ? escolas.find(e => e.id === escolaSelecionada)?.name 
+                        : "Escolha uma escola..."
+                      }
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </button>
+
+                {isOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white rounded-xl border shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="p-2 border-b bg-slate-50/50">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          placeholder="Buscar escola (ex: Ester)..."
+                          className="pl-9 h-9 border-slate-200 focus:ring-rose-500"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto p-1 custom-scrollbar">
+                      {escolas
+                        .filter(e => filtroRota === 'todas' || e.rotaId === filtroRota)
+                        .filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .length === 0 ? (
+                          <div className="p-4 text-center text-sm text-slate-500">Nenhuma escola encontrada.</div>
+                        ) : (
+                          escolas
+                            .filter(e => filtroRota === 'todas' || e.rotaId === filtroRota)
+                            .filter(e => e.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                            .map(e => (
+                              <button
+                                key={e.id}
+                                onClick={() => {
+                                  carregarDemandasEscola(e.id);
+                                  setIsOpen(false);
+                                  setSearchTerm('');
+                                }}
+                                className={cn(
+                                  "w-full flex items-center px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-rose-50 text-left",
+                                  escolaSelecionada === e.id ? "bg-rose-50 text-rose-700 font-bold" : "text-slate-700"
+                                )}
+                              >
+                                <Check className={cn(
+                                  "mr-2 h-4 w-4 shrink-0 text-rose-600",
+                                  escolaSelecionada === e.id ? "opacity-100" : "opacity-0"
+                                )} />
+                                <span className="truncate">{e.name}</span>
+                              </button>
+                            ))
+                        )
+                      }
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {filtroRota !== 'todas' && (
+                <p className="text-[10px] text-slate-400 italic">Exibindo apenas escolas da rota selecionada.</p>
+              )}
             </div>
           </div>
 
