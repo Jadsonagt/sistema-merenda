@@ -7,11 +7,10 @@ import {
   ShieldAlert,
   School,
   Clock,
-  PackageSearch,
   TrendingDown,
   Route
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -41,7 +40,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { api } from '../services/api';
 import { format, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 
@@ -118,7 +116,7 @@ export const Dashboard: React.FC = () => {
   });
   const [rotaFiltro, setRotaFiltro] = useState<string>("all");
 
-  const isAdmin = userProfile?.role?.toUpperCase() === 'ADMIN';
+  const isAdmin = useMemo(() => userProfile?.role?.toUpperCase() === 'ADMIN', [userProfile]);
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -191,20 +189,24 @@ export const Dashboard: React.FC = () => {
   }, [demandasRede]);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('usuario') || '{}');
-    setUserProfile(user);
-    console.log("Perfil Logado (Dashboard):", user?.role);
-    
-    if (user.role?.toUpperCase() === 'SUPERVISORA' && user.rotaId) {
-      setRotaFiltro(user.rotaId);
+    const userStr = localStorage.getItem('usuario');
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      setUserProfile(user);
+      if (user.role?.toUpperCase() === 'SUPERVISORA' && user.rotaId) {
+        setRotaFiltro(user.rotaId);
+      }
     }
     
     // Listen for storage changes to refresh user state
     const handleStorageChange = () => {
-      const updatedUser = JSON.parse(localStorage.getItem('usuario') || '{}');
-      setUserProfile(updatedUser);
-      if (updatedUser.role?.toUpperCase() === 'SUPERVISORA' && updatedUser.rotaId) {
-        setRotaFiltro(updatedUser.rotaId);
+      const updatedUserStr = localStorage.getItem('usuario');
+      if (updatedUserStr) {
+        const updatedUser = JSON.parse(updatedUserStr);
+        setUserProfile(updatedUser);
+        if (updatedUser.role?.toUpperCase() === 'SUPERVISORA' && updatedUser.rotaId) {
+          setRotaFiltro(updatedUser.rotaId);
+        }
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -382,7 +384,7 @@ export const Dashboard: React.FC = () => {
             }}
             disabled={!isAdmin}
           >
-            <SelectTrigger className={`w-[200px] bg-slate-50 border-none font-medium text-slate-700 ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}`}>
+            <SelectTrigger className={`w-[280px] bg-slate-50 border-none font-medium text-slate-700 ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}`}>
               <div className="flex items-center gap-2">
                 <Route className="h-4 w-4 text-blue-500" />
                 <SelectValue placeholder="Todas as Rotas" />
@@ -397,7 +399,7 @@ export const Dashboard: React.FC = () => {
           </Select>
 
           <Select value={escolaFiltro} onValueChange={setEscolaFiltro}>
-            <SelectTrigger className="max-w-md bg-slate-50 border-none font-medium text-slate-700">
+            <SelectTrigger className="w-[280px] bg-slate-50 border-none font-medium text-slate-700">
               <div className="flex items-center gap-2">
                 <School className="h-4 w-4 text-blue-500" />
                 <SelectValue placeholder="Todas as Unidades" />

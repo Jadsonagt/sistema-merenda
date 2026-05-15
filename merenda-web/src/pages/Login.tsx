@@ -23,8 +23,14 @@ export const Login = () => {
       const response = await api.post('/auth/login', { email, senha });
       const { token, usuario } = response.data;
       
+      // Limpeza de cache/sessão antiga
+      localStorage.clear();
+      
       localStorage.setItem('token', token);
       localStorage.setItem('usuario', JSON.stringify(usuario));
+      
+      console.log("Sessão Gravada com Sucesso:", localStorage.getItem('usuario'));
+      
       navigate('/dashboard');
     } catch (err: any) {
       if (err.response?.status === 401) {

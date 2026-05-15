@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 
 export class UsuarioController {
   async index(req: Request, res: Response) {

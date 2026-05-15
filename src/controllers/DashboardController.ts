@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { formatLogisticValue } from '../utils/unitFormatter.js'; // 🔥 CORREÇÃO: Importação adicionada!
+import { formatLogisticValue } from '../utils/unitFormatter.js';
 
 export class DashboardController {
   /**
@@ -17,6 +17,11 @@ export class DashboardController {
    *         schema:
    *           type: string
    *         description: ID da escola para filtrar os dados (opcional)
+   *       - in: query
+   *         name: rotaId
+   *         schema:
+   *           type: string
+   *         description: ID da rota para filtrar os dados (opcional)
    *     responses:
    *       200:
    *         description: Resumo retornado com sucesso
@@ -25,10 +30,15 @@ export class DashboardController {
    */
   async resumo(req: Request, res: Response) {
     try {
-      const { escolaId } = req.query;
+      const { escolaId, rotaId } = req.query;
 
       // Filtro dinâmico
-      const whereFilter = escolaId ? { escolaId: String(escolaId) } : {};
+      const whereFilter: any = {};
+      if (escolaId) {
+        whereFilter.escolaId = String(escolaId);
+      } else if (rotaId) {
+        whereFilter.escola = { rotaId: String(rotaId) };
+      }
 
       const [
         totalEscolas,
@@ -38,7 +48,9 @@ export class DashboardController {
         alertasRemanejamento,
         escolasLista
       ] = await Promise.all([
-        prisma.escola.count(),
+        prisma.escola.count({
+          where: rotaId ? { rotaId: String(rotaId) } : {}
+        }),
         prisma.fichaTecnica.count(),
         prisma.estoque.findMany({
           where: {
@@ -62,13 +74,16 @@ export class DashboardController {
           include: { escola: true, item: true }
         }),
         prisma.escola.findMany({
-          where: escolaId ? { id: String(escolaId) } : {},
+          where: {
+            ...(escolaId ? { id: String(escolaId) } : {}),
+            ...(rotaId && !escolaId ? { rotaId: String(rotaId) } : {})
+          },
           select: { id: true, name: true, type: true }
         })
       ]);
 
       return res.status(200).json({
-        totalEscolas: escolaId ? 1 : totalEscolas,
+        totalEscolas: (escolaId) ? 1 : totalEscolas,
         totalReceitas,
         alertasEstoque,
         historicoMotor,
@@ -81,55 +96,20 @@ export class DashboardController {
     }
   }
 
-  /**
-   * @swagger
-   * /api/dashboard/divergencias:
-   *   get:
-   *     summary: Retorna as top divergências de estoque
-   *     tags: [Dashboard]
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: query
-   *         name: escolaId
-   *         schema:
-   *           type: string
-   *         description: ID da escola para filtrar os dados (opcional)
-   *     responses:
-   *       200:
-   *         description: Lista de divergências retornada com sucesso
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: array
-   *               items:
-   *                 type: object
-   *                 properties:
-   *                   id:
-   *                     type: string
-   *                   escolaId:
-   *                     type: string
-   *                   escolaNome:
-   *                     type: string
-   *                   produto:
-   *                     type: string
-   *                   divergencia:
-   *                     type: number
-   *                   valor:
-   *                     type: string
-   *                     example: "-5 UN (5kg)"
-   */
   async getTopDivergencias(req: Request, res: Response) {
     try {
-      const { escolaId } = req.query;
+      const { escolaId, rotaId } = req.query;
 
-      const whereFilter = escolaId ? { escolaId: String(escolaId) } : {};
+      const whereFilter: any = {};
+      if (escolaId) {
+        whereFilter.escolaId = String(escolaId);
+      } else if (rotaId) {
+        whereFilter.escola = { rotaId: String(rotaId) };
+      }
 
-      // Busca os últimos registros de inventário
       const registros = await prisma.inventarioHistorico.findMany({
         where: {
           ...whereFilter,
-          // 🔥 CORREÇÃO: Usando a sintaxe nativa do Prisma para comparar colunas
           quantidadeFisica: {
             lt: prisma.inventarioHistorico.fields.estoqueTeoricoNoMomento
           }
@@ -144,14 +124,10 @@ export class DashboardController {
         take: 50
       });
 
-      // Deduplicação: Manter apenas o registro mais recente por (escola + item)
       const registrosUnicos = new Map<string, typeof registros[0]>();
       
       for (const r of registros) {
-        // Chave única para Escola + Produto
         const chave = `${r.escolaId}-${r.itemId}`; 
-        
-        // Como vem ordenado DESC, o primeiro que aparece é o mais recente
         if (!registrosUnicos.has(chave)) {
           registrosUnicos.set(chave, r);
         }
@@ -159,7 +135,6 @@ export class DashboardController {
       
       const registrosFiltrados = Array.from(registrosUnicos.values());
 
-      // Filtra e mapeia para o payload do widget
       const divergencias = registrosFiltrados
         .map(r => {
           const divergenciaCalc = r.quantidadeFisica - r.estoqueTeoricoNoMomento;
@@ -177,7 +152,7 @@ export class DashboardController {
           };
         })
         .filter(r => r.divergencia < 0)
-        .sort((a, b) => a.divergencia - b.divergencia) // do maior furo para o menor
+        .sort((a, b) => a.divergencia - b.divergencia)
         .slice(0, 10);
 
       return res.status(200).json(divergencias);
@@ -187,54 +162,21 @@ export class DashboardController {
     }
   }
 
-  /**
-   * @swagger
-   * /api/dashboard/vencimentos:
-   *   get:
-   *     summary: Retorna alertas de vencimentos críticos
-   *     tags: [Dashboard]
-   *     security:
-   *       - bearerAuth: []
-   *     parameters:
-   *       - in: query
-   *         name: escolaId
-   *         schema:
-   *           type: string
-   *         description: ID da escola para filtrar os dados (opcional)
-   *     responses:
-   *       200:
-   *         description: Lista de vencimentos retornada com sucesso
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: array
-   *               items:
-   *                 type: object
-   *                 properties:
-   *                   id:
-   *                     type: string
-   *                   escolaId:
-   *                     type: string
-   *                   escolaNome:
-   *                     type: string
-   *                   produto:
-   *                     type: string
-   *                   diasParaVencer:
-   *                     type: number
-   *                   valor:
-   *                     type: string
-   *                     example: "Vence em 5 dias"
-   */
   async getVencimentosCriticos(req: Request, res: Response) {
     try {
-      const { escolaId } = req.query;
+      const { escolaId, rotaId } = req.query;
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       const limite = new Date(hoje);
       limite.setDate(limite.getDate() + 30);
 
-      const whereFilter = escolaId ? { escolaId: String(escolaId) } : {};
+      const whereFilter: any = {};
+      if (escolaId) {
+        whereFilter.escolaId = String(escolaId);
+      } else if (rotaId) {
+        whereFilter.escola = { rotaId: String(rotaId) };
+      }
 
       const alertas = await prisma.alertaRemanejamento.findMany({
         where: {
@@ -263,7 +205,7 @@ export class DashboardController {
           escolaNome: a.escola.name,
           produto: a.item.name,
           diasParaVencer: dias,
-          valor: `Vence em ${dias} dias` // Formatado direto para o frontend
+          valor: `Vence em ${dias} dias`
         };
       });
 
