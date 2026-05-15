@@ -232,7 +232,7 @@ export class AuthController {
           enderecoResidencial, 
           latitudeResidencial: latitudeResidencial ? Number(latitudeResidencial) : null,
           longitudeResidencial: longitudeResidencial ? Number(longitudeResidencial) : null,
-          rotaId 
+          rotaId: (req as any).user?.role === 'ADMIN' ? rotaId : undefined
         },
         select: { id: true, nome: true, email: true, role: true, enderecoResidencial: true, latitudeResidencial: true, longitudeResidencial: true, rotaId: true }
       });

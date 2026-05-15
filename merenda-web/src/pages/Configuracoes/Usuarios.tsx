@@ -1,4 +1,4 @@
-// Build Trigger: 2026-05-13 16:10
+// Build Trigger: 2026-05-15 11:10
 import { useState, useEffect } from 'react';
 import {
   Users,
@@ -8,7 +8,8 @@ import {
   Key,
   Shield,
   Mail,
-  User
+  User,
+  Route
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,11 +45,11 @@ import {
   deleteUsuario,
   type Usuario
 } from '@/services/api/usuarios';
+import { api } from '@/services/api';
 
 const ROLES = [
   { value: 'ADMIN', label: 'Administrador' },
-  { value: 'SUPERVISORA', label: 'Supervisora' },
-  { value: 'NUTRICIONISTA', label: 'Nutricionista' }
+  { value: 'SUPERVISORA', label: 'Supervisora' }
 ];
 
 export const UsuariosPage = () => {
@@ -63,18 +64,32 @@ export const UsuariosPage = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [role, setRole] = useState('');
+  const [rotaId, setRotaId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [rotas, setRotas] = useState<any[]>([]);
 
   const { toast } = useToast();
 
   useEffect(() => {
+    const userStr = localStorage.getItem('usuario');
+    const user = JSON.parse(userStr || '{}');
+    setCurrentUser(user);
+    console.log('--- DEBUG USUARIOS ---');
+    console.log('LocalStorage "usuario":', userStr);
+    console.log('Current User Role:', user?.role);
+    console.log('----------------------');
     fetchUsuarios();
   }, []);
 
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
-      const data = await getUsuarios();
-      setUsuarios(data);
+      const [usersData, rotasRes] = await Promise.all([
+        getUsuarios(),
+        api.get('/rotas')
+      ]);
+      setUsuarios(usersData);
+      setRotas(rotasRes.data || []);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -92,12 +107,14 @@ export const UsuariosPage = () => {
       setNome(usuario.nome);
       setEmail(usuario.email);
       setRole(usuario.role);
+      setRotaId(usuario.rotaId || 'none');
       setSenha(''); // Senha vazia ao editar (opcional)
     } else {
       setEditingUsuario(null);
       setNome('');
       setEmail('');
       setRole('SUPERVISORA');
+      setRotaId('none');
       setSenha('');
     }
     setIsModalOpen(true);
@@ -108,10 +125,27 @@ export const UsuariosPage = () => {
     setIsSubmitting(true);
 
     try {
-      const payload = { nome, email, role, senha: senha || undefined };
+      const payload = { 
+        nome, 
+        email, 
+        role, 
+        senha: senha || undefined,
+        rotaId: (rotaId === 'none' || rotaId === '') ? null : rotaId 
+      };
       
+      console.log('ID da Rota sendo enviado:', payload.rotaId);
+      console.log('Enviando payload para API:', payload);
+
+      let result;
+
       if (editingUsuario) {
-        await updateUsuario(editingUsuario.id, payload);
+        result = await updateUsuario(editingUsuario.id, payload);
+        console.log('ID da Rota sendo enviado:', payload.rotaId);
+        console.log('Resposta da API (update):', result);
+        
+        // Atualiza o estado local imediatamente com o objeto completo (incluindo a relação rota)
+        setUsuarios(prev => prev.map(u => u.id === editingUsuario.id ? result : u));
+        
         toast({ className: 'bg-emerald-50 text-emerald-900 border-emerald-200', title: 'Sucesso', description: 'Usuário atualizado com sucesso.' });
       } else {
         if (!senha) {
@@ -119,13 +153,32 @@ export const UsuariosPage = () => {
            setIsSubmitting(false);
            return;
         }
-        await createUsuario(payload);
+        result = await createUsuario(payload);
+        // Adiciona o novo usuário ao estado local imediatamente
+        setUsuarios(prev => [...prev, result]);
         toast({ className: 'bg-emerald-50 text-emerald-900 border-emerald-200', title: 'Sucesso', description: 'Usuário criado com sucesso.' });
       }
       
+      // Se o usuário editado for o próprio usuário logado, atualiza o localStorage
+      if (currentUser && (editingUsuario?.id === currentUser.id || (!editingUsuario && email === currentUser.email))) {
+        const updatedSession = { 
+          ...currentUser, 
+          rotaId: result.rotaId, 
+          role: result.role, 
+          nome: result.nome,
+          rota: result.rota // Inclui o objeto da rota para garantir o isolamento no Dashboard
+        };
+        localStorage.setItem('usuario', JSON.stringify(updatedSession));
+        setCurrentUser(updatedSession);
+        // Notifica outros componentes (como o Dashboard) via evento customizado se necessário
+        window.dispatchEvent(new Event('storage'));
+      }
+
       setIsModalOpen(false);
-      fetchUsuarios();
+      // Forçar refresh da lista
+      await fetchUsuarios();
     } catch (error: any) {
+      console.error('Erro ao salvar usuário:', error);
       toast({
         variant: 'destructive',
         title: 'Erro ao salvar',
@@ -151,6 +204,8 @@ export const UsuariosPage = () => {
       });
     }
   };
+
+  const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
 
   return (
     <div className="p-4 sm:p-8 w-full max-w-6xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
@@ -197,6 +252,11 @@ export const UsuariosPage = () => {
                       </span>
                     </div>
                     
+                    <div className="flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100">
+                      <Route className="h-3 w-3 text-blue-500" />
+                      <span>Rota: {u.rota?.name || 'Rede Global'}</span>
+                    </div>
+                    
                     <div className="pt-4 border-t border-slate-100 flex gap-3">
                       <Button
                         variant="outline"
@@ -225,6 +285,7 @@ export const UsuariosPage = () => {
                       <TableHead className="font-bold text-slate-700 px-8 py-4 h-14">Usuário</TableHead>
                       <TableHead className="font-bold text-slate-700 h-14 text-center">E-mail</TableHead>
                       <TableHead className="font-bold text-slate-700 h-14 text-center">Cargo / Role</TableHead>
+                      <TableHead className="font-bold text-slate-700 h-14 text-center">Rota de Atuação</TableHead>
                       <TableHead className="font-bold text-slate-700 text-right px-8 h-14">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -249,6 +310,13 @@ export const UsuariosPage = () => {
                             u.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
                           }`}>
                             {u.role}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium border ${
+                            u.rota?.name ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-50 text-slate-500 border-slate-100'
+                          }`}>
+                            {u.rota?.name || 'Rede Global'}
                           </span>
                         </TableCell>
                         <TableCell className="text-right px-8 py-5">
@@ -357,6 +425,31 @@ export const UsuariosPage = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {role === 'SUPERVISORA' && (
+                <div className="space-y-2 animate-in slide-in-from-top-2">
+                  <Label className="text-sm font-bold text-slate-700 ml-1">Rota de Atuação</Label>
+                  <Select 
+                    value={rotaId || 'none'} 
+                    onValueChange={setRotaId}
+                    disabled={!isAdmin}
+                  >
+                    <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                      <div className="flex items-center gap-2">
+                        <Route className="h-4 w-4 text-blue-600" />
+                        <SelectValue placeholder="Selecione uma rota" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma Rota (Acesso Global)</SelectItem>
+                      {rotas.map(r => (
+                        <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-slate-400 italic ml-1">Supervisoras são isoladas aos dados da rota selecionada.</p>
+                </div>
+              )}
             </div>
 
             <DialogFooter className="bg-slate-50 -mx-8 -mb-8 p-6 mt-8 flex flex-row gap-3 border-t border-slate-100">

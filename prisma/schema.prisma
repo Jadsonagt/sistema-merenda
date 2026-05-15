@@ -21,9 +21,7 @@ enum TipoRefeicao {
 
 enum Role {
   ADMIN
-  SUPERVISOR
   SUPERVISORA
-  NUTRICIONISTA
 }
 
 enum MovimentacaoType {
@@ -299,7 +297,7 @@ model DistanciaReferencia {
 model DiarioBordo {
   id              String         @id @default(uuid())
   usuarioId       String
-  usuario         Usuario        @relation(fields: [usuarioId], references: [id])
+  usuario         Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   data            DateTime
   kmTotal         Float
   odometroInicial Float?         @default(0)

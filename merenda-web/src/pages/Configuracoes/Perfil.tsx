@@ -23,6 +23,7 @@ export const Perfil: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [rotas, setRotas] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -76,7 +77,11 @@ export const Perfil: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+    const userStr = localStorage.getItem('usuario');
+    if (userStr) setCurrentUser(JSON.parse(userStr));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -102,7 +107,12 @@ export const Perfil: React.FC = () => {
       if (userRaw) {
         const user = JSON.parse(userRaw);
         user.nome = nome;
+        // Se for admin, a rota pode ter mudado no banco. 
+        // Se não for admin, o rotaId enviado foi ignorado pelo backend, mas mantemos o sync
+        user.rotaId = rotaId || null;
         localStorage.setItem('usuario', JSON.stringify(user));
+        setCurrentUser(user);
+        window.dispatchEvent(new Event('storage'));
       }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,13 +160,18 @@ export const Perfil: React.FC = () => {
                 <Map className="h-4 w-4 text-blue-500" />
                 Minha Rota (Setor)
               </Label>
-              <Select value={rotaId} onValueChange={setRotaId}>
-                <SelectTrigger className="bg-white">
+              <Select 
+                value={rotaId || 'none'} 
+                onValueChange={setRotaId}
+                disabled={currentUser?.role !== 'ADMIN'}
+              >
+                <SelectTrigger className={`bg-white ${currentUser?.role !== 'ADMIN' ? 'opacity-70 cursor-not-allowed' : ''}`}>
                   <SelectValue placeholder="Selecione sua rota" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
+                  <SelectItem value="none">Nenhuma Rota</SelectItem>
                   {rotas.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                    <SelectItem key={r.id} value={r.id}>{r.nome || r.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

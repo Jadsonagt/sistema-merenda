@@ -25,12 +25,12 @@ async function main() {
   // Criando um Supervisor de Testes
   const supervisor = await prisma.usuario.upsert({
     where: { email: 'supervisao@merenda.gov.br' },
-    update: { senha: passwordHash, role: Role.SUPERVISOR },
+    update: { senha: passwordHash, role: Role.SUPERVISORA },
     create: {
       nome: 'Supervisor de Teste',
       email: 'supervisao@merenda.gov.br',
       senha: passwordHash,
-      role: Role.SUPERVISOR
+      role: Role.SUPERVISORA
     }
   });
 

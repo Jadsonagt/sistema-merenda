@@ -5,6 +5,11 @@ export interface Usuario {
   nome: string;
   email: string;
   role: string;
+  rotaId: string | null;
+  rota?: {
+    id: string;
+    name: string;
+  };
   createdAt?: string;
 }
 

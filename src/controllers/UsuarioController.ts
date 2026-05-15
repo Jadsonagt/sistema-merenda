@@ -13,6 +13,10 @@ export class UsuarioController {
           nome: true,
           email: true,
           role: true,
+          rotaId: true,
+          rota: {
+            select: { id: true, name: true }
+          },
           createdAt: true,
         },
         orderBy: { nome: 'asc' },
@@ -26,7 +30,8 @@ export class UsuarioController {
 
   async store(req: Request, res: Response) {
     try {
-      const { nome, email, senha, role } = req.body;
+      console.log("Dados recebidos no server (store):", req.body);
+      const { nome, email, senha, role, rotaId } = req.body;
 
       if (!nome || !email || !senha || !role) {
         return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
@@ -39,18 +44,27 @@ export class UsuarioController {
 
       const passwordHash = await bcrypt.hash(senha, 10);
 
+      const createData = {
+        nome,
+        email,
+        senha: passwordHash,
+        role: role as Role,
+        rotaId: (rotaId === 'none' || rotaId === '') ? null : (rotaId || null),
+      };
+
+      console.log("PRISMA CREATE PAYLOAD:", JSON.stringify(createData, null, 2));
+
       const usuario = await prisma.usuario.create({
-        data: {
-          nome,
-          email,
-          senha: passwordHash,
-          role: role as Role,
-        },
+        data: createData,
         select: {
           id: true,
           nome: true,
           email: true,
           role: true,
+          rotaId: true,
+          rota: {
+            select: { id: true, name: true }
+          },
         },
       });
 
@@ -64,26 +78,35 @@ export class UsuarioController {
   async update(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { nome, email, senha, role } = req.body;
+      const { nome, email, senha, role, rotaId } = req.body;
 
-      const data: any = {
+      console.log("UUID da Rota que chegou:", rotaId);
+
+      const updateData: any = {
         nome,
         email,
         role: role as Role,
+        rotaId: rotaId === 'none' || !rotaId ? null : rotaId,
       };
 
       if (senha) {
-        data.senha = await bcrypt.hash(senha, 10);
+        updateData.senha = await bcrypt.hash(senha, 10);
       }
+
+      console.log("PRISMA UPDATE PAYLOAD (id=" + id + "):", JSON.stringify(updateData, null, 2));
 
       const usuario = await prisma.usuario.update({
         where: { id: String(id) },
-        data,
+        data: updateData,
         select: {
           id: true,
           nome: true,
           email: true,
           role: true,
+          rotaId: true,
+          rota: {
+            select: { id: true, name: true }
+          },
         },
       });
 

@@ -8,7 +8,8 @@ import {
   School,
   Clock,
   PackageSearch,
-  TrendingDown
+  TrendingDown,
+  Route
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import {
@@ -78,6 +79,7 @@ interface DashboardData {
 interface Escola {
   id: string;
   name: string;
+  rotaId?: string;
 }
 
 interface Item {
@@ -92,10 +94,13 @@ export const Dashboard: React.FC = () => {
   const [escolas, setEscolas] = useState<Escola[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [escolaFiltro, setEscolaFiltro] = useState<string>("all");
-  const [abaAtiva, setAbaAtiva] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalRestricoes, setTotalRestricoes] = useState<number>(0);
+  const [rotas, setRotas] = useState<any[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [abaAtiva, setAbaAtiva] = useState<string | null>(null);
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [demandasRede, setDemandasRede] = useState<any[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,11 +116,17 @@ export const Dashboard: React.FC = () => {
     quantidadeRisco: '',
     dataVencimento: ''
   });
+  const [rotaFiltro, setRotaFiltro] = useState<string>("all");
+
+  const isAdmin = userProfile?.role?.toUpperCase() === 'ADMIN';
 
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const url = `/dashboard/resumo${escolaFiltro !== "all" ? `?escolaId=${escolaFiltro}` : ''}`;
+      let url = `/dashboard/resumo?`;
+      if (escolaFiltro !== "all") url += `escolaId=${escolaFiltro}&`;
+      if (rotaFiltro !== "all") url += `rotaId=${rotaFiltro}&`;
+      
       const response = await api.get<DashboardData>(url);
       setData(response.data);
     } catch (error) {
@@ -127,11 +138,13 @@ export const Dashboard: React.FC = () => {
 
   const carregarMetricaDietas = async () => {
     try {
-      const url = escolaFiltro === "all" ? '/dietas/demandas' : `/dietas/demandas?escolaId=${escolaFiltro}`;
-      const res = await api.get(url, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      let url = '/dietas/demandas?';
+      if (escolaFiltro !== "all") url += `escolaId=${escolaFiltro}&`;
+      if (rotaFiltro !== "all") url += `rotaId=${rotaFiltro}&`;
+      
+      const res = await api.get(url);
       const listaDemandas = res.data || [];
       setDemandasRede(listaDemandas);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const total = listaDemandas.reduce((acc: number, demanda: any) => acc + Number(demanda.quantidade), 0);
       setTotalRestricoes(total);
     } catch (error) {
@@ -141,10 +154,10 @@ export const Dashboard: React.FC = () => {
 
   const carregarDivergencias = async () => {
     try {
-      const url = escolaFiltro === "all"
-        ? '/dashboard/divergencias'
-        : `/dashboard/divergencias?escolaId=${escolaFiltro}`;
-      const res = await api.get(url, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      let url = '/dashboard/divergencias?';
+      if (escolaFiltro !== "all") url += `escolaId=${escolaFiltro}&`;
+      if (rotaFiltro !== "all") url += `rotaId=${rotaFiltro}&`;
+      const res = await api.get(url);
       setDivergencias(res.data || []);
     } catch (error) {
       console.error('Erro ao carregar divergências:', error);
@@ -153,10 +166,10 @@ export const Dashboard: React.FC = () => {
 
   const carregarVencimentos = async () => {
     try {
-      const url = escolaFiltro === "all"
-        ? '/dashboard/vencimentos'
-        : `/dashboard/vencimentos?escolaId=${escolaFiltro}`;
-      const res = await api.get(url, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      let url = '/dashboard/vencimentos?';
+      if (escolaFiltro !== "all") url += `escolaId=${escolaFiltro}&`;
+      if (rotaFiltro !== "all") url += `rotaId=${rotaFiltro}&`;
+      const res = await api.get(url);
       setVencimentos(res.data || []);
     } catch (error) {
       console.error('Erro ao carregar vencimentos:', error);
@@ -174,22 +187,41 @@ export const Dashboard: React.FC = () => {
       mapa[d.escolaId].restricoes.push(d);
     });
 
-    // Retorna um array ordenado por ordem alfabética da escola
     return Object.values(mapa).sort((a, b) => a.nomeEscola.localeCompare(b.nomeEscola));
   }, [demandasRede]);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('usuario') || '{}');
+    setUserProfile(user);
+    console.log("Perfil Logado (Dashboard):", user?.role);
+    
+    if (user.role?.toUpperCase() === 'SUPERVISORA' && user.rotaId) {
+      setRotaFiltro(user.rotaId);
+    }
+    
+    // Listen for storage changes to refresh user state
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem('usuario') || '{}');
+      setUserProfile(updatedUser);
+      if (updatedUser.role?.toUpperCase() === 'SUPERVISORA' && updatedUser.rotaId) {
+        setRotaFiltro(updatedUser.rotaId);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     fetchDashboard();
     carregarMetricaDietas();
     carregarDivergencias();
     carregarVencimentos();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [escolaFiltro]);
+  }, [escolaFiltro, rotaFiltro]);
 
   useEffect(() => {
-    // Prefetch for modal and filters
     api.get('/escolas').then(res => setEscolas(res.data));
     api.get('/items').then(res => setItems(res.data));
+    api.get('/rotas').then(res => setRotas(res.data || []));
   }, []);
 
   const handleCreateAlert = async (e: React.FormEvent) => {
@@ -254,17 +286,11 @@ export const Dashboard: React.FC = () => {
   const alertCount = safeData.alertasEstoque.length;
   const remanejamentoCount = safeData.alertasRemanejamento.length;
 
-  // --- PAINEL DE ATENÇÃO: dados reais (divergencias + vencimentos) ---
   const getTagStyleVencimento = (dias: number): string => {
     if (dias <= 7)  return 'bg-rose-100 text-rose-800';
     if (dias <= 15) return 'bg-amber-100 text-amber-800';
     return 'bg-amber-50 text-amber-700 border border-amber-200';
   };
-
-  const divergenciasFiltradas = divergencias; // filtrado pelo back-end
-
-  const vencimentosFiltrados = vencimentos; // filtrado pelo back-end
-  // --- FIM DO PAINEL ---
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-10 animate-in fade-in duration-700">
@@ -285,14 +311,10 @@ export const Dashboard: React.FC = () => {
                   Novo Alerta de Validade
                 </Button>
               </DialogTrigger>
-              <DialogContent
-                className="bg-white"
-                onPointerDownOutside={(e) => e.preventDefault()}
-                onEscapeKeyDown={(e) => e.preventDefault()}
-              >
+              <DialogContent className="bg-white">
                 <DialogHeader>
                   <DialogTitle>Registrar Alerta de Risco</DialogTitle>
-                  <DialogDescription>Use este formulário para sinalizar itens próximos ao vencimento ou com excesso visual.</DialogDescription>
+                  <DialogDescription>Use este formulário para sinalizar itens próximos ao vencimento.</DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleCreateAlert} className="space-y-4 pt-4">
                   <div className="space-y-2">
@@ -302,7 +324,10 @@ export const Dashboard: React.FC = () => {
                         <SelectValue placeholder="Selecione a unidade..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {escolas.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                        {escolas
+                          .filter(e => rotaFiltro === "all" || e.rotaId === rotaFiltro)
+                          .map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)
+                        }
                       </SelectContent>
                     </Select>
                   </div>
@@ -348,20 +373,52 @@ export const Dashboard: React.FC = () => {
             <Filter className="h-4 w-4" />
             Filtrar por Unidade:
           </div>
-          <Select value={escolaFiltro} onValueChange={setEscolaFiltro}>
-            <SelectTrigger className="max-w-md bg-slate-50 border-none font-medium text-slate-700">
-              <SelectValue placeholder="Todas as Unidades" />
+          
+          <Select 
+            value={rotaFiltro} 
+            onValueChange={(val) => {
+              setRotaFiltro(val);
+              setEscolaFiltro("all");
+            }}
+            disabled={!isAdmin}
+          >
+            <SelectTrigger className={`w-[200px] bg-slate-50 border-none font-medium text-slate-700 ${!isAdmin ? 'opacity-70 cursor-not-allowed' : ''}`}>
+              <div className="flex items-center gap-2">
+                <Route className="h-4 w-4 text-blue-500" />
+                <SelectValue placeholder="Todas as Rotas" />
+              </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as Escolas (Rede Global)</SelectItem>
-              {escolas.map(e => (
-                <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+              {isAdmin && <SelectItem value="all">Todas as Rotas (Rede Global)</SelectItem>}
+              {rotas.map(r => (
+                <SelectItem key={r.id} value={r.id}>{r.nome || r.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {escolaFiltro !== "all" && (
+
+          <Select value={escolaFiltro} onValueChange={setEscolaFiltro}>
+            <SelectTrigger className="max-w-md bg-slate-50 border-none font-medium text-slate-700">
+              <div className="flex items-center gap-2">
+                <School className="h-4 w-4 text-blue-500" />
+                <SelectValue placeholder="Todas as Unidades" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {isAdmin && <SelectItem value="all">Todas as Unidades (Rede Global)</SelectItem>}
+              {escolas
+                .filter(e => rotaFiltro === "all" || e.rotaId === rotaFiltro)
+                .map(e => (
+                  <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
+                ))
+              }
+            </SelectContent>
+          </Select>
+
+          {(escolaFiltro !== "all" || rotaFiltro !== "all") && (
             <Badge className="bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100 transition-colors">
-              Filtro Ativo: {escolas.find(e => e.id === escolaFiltro)?.name}
+              Filtro Ativo: {escolaFiltro !== "all" 
+                ? escolas.find(e => e.id === escolaFiltro)?.name 
+                : (rotas.find(r => r.id === rotaFiltro)?.nome || rotas.find(r => r.id === rotaFiltro)?.name || "Filtrado")}
             </Badge>
           )}
         </div>
@@ -370,139 +427,114 @@ export const Dashboard: React.FC = () => {
       {loading ? (
         <div className="flex flex-col justify-center items-center py-20 gap-4">
           <div className="h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 font-bold animate-pulse">Atualizando indicadores da unidade...</p>
+          <p className="text-slate-500 font-bold animate-pulse">Atualizando indicadores...</p>
         </div>
       ) : (
         <>
-          {/* Grade de Indicadores Principais (Interativa) */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
-
-            {/* Unidades Atendidas */}
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'UNIDADES' ? null : 'UNIDADES')}
               className={`shadow-lg border-none hover:shadow-xl transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-blue-400 ${abaAtiva === 'UNIDADES' ? 'ring-4 ring-blue-500 bg-blue-50/50' : 'bg-white'}`}
             >
               <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest">Unidades Atendidas</CardTitle>
+                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest">Unidades</CardTitle>
                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${abaAtiva === 'UNIDADES' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-600'}`}>
                   <School className="h-5 w-5" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-slate-900">{safeData.totalEscolas}</div>
-                <p className="text-[10px] text-slate-400 mt-1 font-medium">Clique para ver lista</p>
+                <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Toque para listar</p>
               </CardContent>
             </Card>
 
-            {/* Alunos c/ Restrições */}
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'RESTRICOES' ? null : 'RESTRICOES')}
               className={`shadow-lg border-none hover:shadow-xl transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-rose-400 ${abaAtiva === 'RESTRICOES' ? 'ring-4 ring-rose-500 bg-rose-50/50' : 'bg-white'}`}
             >
               <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className={`text-xs font-bold uppercase tracking-widest ${abaAtiva === 'RESTRICOES' ? 'text-rose-600' : 'text-slate-400'}`}>Restrições</CardTitle>
+                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest">Restrições</CardTitle>
                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${abaAtiva === 'RESTRICOES' ? 'bg-rose-500 text-white' : 'bg-rose-50 text-rose-600'}`}>
                   <ShieldAlert className="h-5 w-5" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-baseline gap-1.5 mt-0.5">
-                  <span className={`text-3xl font-black leading-none ${abaAtiva === 'RESTRICOES' ? 'text-rose-600' : 'text-rose-600'}`}>{totalRestricoes}</span>
-                  <span className="text-[10px] font-bold text-slate-400">
-                    {escolaFiltro === "all" ? "na rede" : "na unidade"}
-                  </span>
-                </div>
-                <p className={`text-[10px] mt-1 font-medium ${abaAtiva === 'RESTRICOES' ? 'text-rose-600' : 'text-slate-400'}`}>Clique para ver mapa de unidades</p>
+                <div className="text-3xl font-black text-rose-600">{totalRestricoes}</div>
+                <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Demandas especiais</p>
               </CardContent>
             </Card>
 
-            {/* Remanejamentos Pendentes */}
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'REMANEJAMENTOS' ? null : 'REMANEJAMENTOS')}
-              className={`shadow-lg border-none transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-amber-400 ${remanejamentoCount > 0 ? (abaAtiva === 'REMANEJAMENTOS' ? 'bg-amber-600 text-white ring-4 ring-amber-400' : 'bg-amber-500 text-white shadow-amber-100') : (abaAtiva === 'REMANEJAMENTOS' ? 'bg-amber-50 ring-4 ring-amber-500' : 'bg-white')}`}
+              className={`shadow-lg border-none transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-amber-400 ${remanejamentoCount > 0 ? (abaAtiva === 'REMANEJAMENTOS' ? 'bg-amber-600 text-white ring-4 ring-amber-400' : 'bg-amber-500 text-white') : (abaAtiva === 'REMANEJAMENTOS' ? 'bg-amber-50 ring-4 ring-amber-500' : 'bg-white')}`}
             >
               <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className={`text-xs font-bold uppercase tracking-widest ${remanejamentoCount > 0 || abaAtiva === 'REMANEJAMENTOS' ? (abaAtiva === 'REMANEJAMENTOS' && remanejamentoCount === 0 ? 'text-amber-600' : 'text-amber-100') : 'text-slate-400'}`}>Remanejamentos</CardTitle>
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${remanejamentoCount > 0 ? (abaAtiva === 'REMANEJAMENTOS' ? 'bg-amber-400' : 'bg-amber-400/50') : (abaAtiva === 'REMANEJAMENTOS' ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-600')}`}>
+                <CardTitle className={`text-xs font-bold uppercase tracking-widest ${remanejamentoCount > 0 ? 'text-amber-100' : 'text-slate-400'}`}>Remanejamentos</CardTitle>
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-amber-400/50">
                   <Clock className="h-5 w-5" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className={`text-3xl font-black ${remanejamentoCount > 0 || (abaAtiva === 'REMANEJAMENTOS' && remanejamentoCount > 0) ? 'text-white' : (abaAtiva === 'REMANEJAMENTOS' ? 'text-amber-900' : 'text-slate-900')}`}>{remanejamentoCount}</div>
-                <p className={`text-[10px] mt-1 font-medium ${remanejamentoCount > 0 ? (abaAtiva === 'REMANEJAMENTOS' ? 'text-amber-100' : 'text-amber-100') : (abaAtiva === 'REMANEJAMENTOS' ? 'text-amber-600' : 'text-slate-400')}`}>
-                  Clique para detalhar riscos
-                </p>
+                <div className="text-3xl font-black">{remanejamentoCount}</div>
+                <p className="text-[10px] mt-1 font-medium italic opacity-80">Riscos de validade</p>
               </CardContent>
             </Card>
 
-            {/* Status do Motor */}
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'MOTOR' ? null : 'MOTOR')}
               className={`shadow-lg border-none hover:shadow-xl transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-slate-400 ${abaAtiva === 'MOTOR' ? 'ring-4 ring-slate-900 bg-slate-50' : 'bg-white'}`}
             >
               <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest">Status do Motor</CardTitle>
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${abaAtiva === 'MOTOR' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                <CardTitle className="text-xs font-bold text-slate-400 uppercase tracking-widest">Motor</CardTitle>
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-slate-100 text-slate-600">
                   <Cpu className="h-5 w-5" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="text-sm font-bold text-slate-700 mt-2 truncate">
-                  {safeData.historicoMotor.length > 0
-                    ? format(new Date(safeData.historicoMotor[0].dataProcessamento), "dd/MM/yyyy", { locale: ptBR })
-                    : "Nenhuma execução"}
+                  {safeData.historicoMotor[0]?.dataProcessamento ? format(new Date(safeData.historicoMotor[0].dataProcessamento), "dd/MM/yyyy") : "Sem exec."}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1 font-medium">Clique para ver histórico</p>
+                <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Último processamento</p>
               </CardContent>
             </Card>
 
-            {/* Itens em Falta (Crítico) */}
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'FALTAS' ? null : 'FALTAS')}
-              className={`shadow-lg border-none transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-red-400 ${alertCount > 0 ? (abaAtiva === 'FALTAS' ? 'bg-red-700 text-white ring-4 ring-red-400' : 'bg-red-600 text-white shadow-red-200') : (abaAtiva === 'FALTAS' ? 'bg-red-50 ring-4 ring-red-500' : 'bg-white')}`}
+              className={`shadow-lg border-none transition-all duration-300 cursor-pointer hover:ring-2 hover:ring-red-400 ${alertCount > 0 ? (abaAtiva === 'FALTAS' ? 'bg-red-700 text-white ring-4 ring-red-400' : 'bg-red-600 text-white') : (abaAtiva === 'FALTAS' ? 'bg-red-50 ring-4 ring-red-500' : 'bg-white')}`}
             >
               <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className={`text-xs font-bold uppercase tracking-widest ${alertCount > 0 || abaAtiva === 'FALTAS' ? (abaAtiva === 'FALTAS' && alertCount === 0 ? 'text-red-600' : 'text-red-100') : 'text-slate-400'}`}>Itens em Falta</CardTitle>
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${alertCount > 0 ? (abaAtiva === 'FALTAS' ? 'bg-red-500' : 'bg-red-400/50') : (abaAtiva === 'FALTAS' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-600')}`}>
+                <CardTitle className={`text-xs font-bold uppercase tracking-widest ${alertCount > 0 ? 'text-red-100' : 'text-slate-400'}`}>Rupturas</CardTitle>
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center bg-red-400/50">
                   <AlertTriangle className="h-5 w-5" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className={`text-3xl font-black ${alertCount > 0 || (abaAtiva === 'FALTAS' && alertCount > 0) ? 'text-white' : (abaAtiva === 'FALTAS' ? 'text-red-900' : 'text-slate-900')}`}>{alertCount}</div>
-                <p className={`text-[10px] mt-1 font-medium ${alertCount > 0 ? (abaAtiva === 'FALTAS' ? 'text-red-100' : 'text-red-100') : (abaAtiva === 'FALTAS' ? 'text-red-600' : 'text-slate-400')}`}>
-                  Clique para ver rupturas
-                </p>
+                <div className="text-3xl font-black">{alertCount}</div>
+                <p className="text-[10px] mt-1 font-medium italic opacity-80">Estoques negativos</p>
               </CardContent>
             </Card>
           </div>
 
-
-          {/* Área de Progressive Disclosure (Renderização Condicional) */}
           <div className="min-h-[200px]">
             {abaAtiva === 'UNIDADES' && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
-                <div className="flex items-center gap-2 px-1 text-blue-600">
-                  <School className="h-6 w-6" />
-                  <h2 className="text-2xl font-black tracking-tight">Unidades da Rede</h2>
-                </div>
+                <h2 className="text-2xl font-black tracking-tight text-blue-600">Unidades da Rede</h2>
                 <Card className="shadow-xl border-none overflow-hidden bg-white">
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader className="bg-slate-50">
                         <TableRow>
-                          <TableHead className="font-bold text-slate-700 px-8 py-4">Nome da Unidade</TableHead>
-                          <TableHead className="font-bold text-slate-700">Tipo / Modalidade</TableHead>
+                          <TableHead className="font-bold text-slate-700 px-8 py-4">Nome</TableHead>
+                          <TableHead className="font-bold text-slate-700">Tipo</TableHead>
                           <TableHead className="font-bold text-slate-700 text-center">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {safeData.escolasLista.map((escola) => (
-                          <TableRow key={escola.id} className="border-b border-slate-100 hover:bg-blue-50/20">
+                          <TableRow key={escola.id} className="hover:bg-blue-50/20 transition-colors">
                             <TableCell className="px-8 py-5 font-bold text-slate-900">{escola.name}</TableCell>
                             <TableCell className="font-medium text-slate-500">{escola.type}</TableCell>
-                            <TableCell className="text-center">
-                              <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100">Ativa</Badge>
-                            </TableCell>
+                            <TableCell className="text-center"><Badge className="bg-emerald-50 text-emerald-600 border-emerald-100">Ativa</Badge></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -514,104 +546,31 @@ export const Dashboard: React.FC = () => {
 
             {abaAtiva === 'REMANEJAMENTOS' && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
-                <div className="flex items-center gap-2 px-1 text-amber-600">
-                  <Clock className="h-6 w-6" />
-                  <h2 className="text-2xl font-black tracking-tight">Sinalizador de Validade / Remanejamentos</h2>
-                </div>
-                {remanejamentoCount === 0 ? (
-                  <Card className="border-dashed border-2 bg-slate-50 shadow-none border-slate-200">
-                    <CardContent className="flex flex-col items-center justify-center py-12 text-center text-slate-400 italic">
-                      Nenhum alerta de validade pendente registrado.
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="shadow-xl border-none overflow-hidden bg-white">
-                    <CardHeader className="bg-amber-500 text-white px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <Clock className="h-6 w-6" />
-                        <div>
-                          <CardTitle className="text-lg text-white">Produtos em Risco</CardTitle>
-                          <CardDescription className="text-amber-50">Itens sinalizados para remanejamento preventivo.</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow>
-                            <TableHead className="font-bold text-slate-700 px-8 py-4">Escola / Unidade</TableHead>
-                            <TableHead className="font-bold text-slate-700">Item / Produto</TableHead>
-                            <TableHead className="font-bold text-slate-700 text-center">Quantidade</TableHead>
-                            <TableHead className="font-bold text-slate-700 text-center">Vencimento</TableHead>
-                            <TableHead className="font-bold text-slate-700 text-center">Ação</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {safeData.alertasRemanejamento.map((alerta) => (
-                            <TableRow key={alerta.id} className="border-b border-slate-100 hover:bg-amber-50/10">
-                              <TableCell className="px-8 py-5 font-bold text-slate-900 flex items-center gap-3">
-                                <div className={`h-3 w-3 rounded-full shrink-0 ${getAlertColor(alerta.dataVencimento)}`} />
-                                {alerta.escola.name}
-                              </TableCell>
-                              <TableCell className="font-medium text-slate-600">
-                                {alerta.item.name}
-                                {alerta.item.baseUnit && (
-                                  <Badge variant="secondary" className="ml-2 text-[10px]">{alerta.item.baseUnit.toLowerCase()}</Badge>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center font-bold text-slate-700">{alerta.quantidadeRisco}</TableCell>
-                              <TableCell className="text-center">
-                                <Badge className={`${getAlertColor(alerta.dataVencimento)} border-none font-bold text-white`}>
-                                  {alerta.dataVencimento ? format(new Date(alerta.dataVencimento), "dd/MM/yyyy") : "AVISO GERAL"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <Button size="sm" variant="outline" onClick={() => handleResolveAlert(alerta.id)} className="border-slate-200 text-slate-600 font-bold">
-                                  Resolvido
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {abaAtiva === 'MOTOR' && (
-              <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
-                <div className="flex items-center gap-2 px-1 text-slate-900">
-                  <Clock className="h-6 w-6" />
-                  <h2 className="text-2xl font-black tracking-tight">Histórico do Motor de Processamento</h2>
-                </div>
+                <h2 className="text-2xl font-black tracking-tight text-amber-600">Remanejamentos Preventivos</h2>
                 <Card className="shadow-xl border-none overflow-hidden bg-white">
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader className="bg-slate-50">
                         <TableRow>
-                          <TableHead className="font-bold text-slate-700 px-8 py-4">Data de Referência</TableHead>
-                          <TableHead className="font-bold text-slate-700">Executado Em</TableHead>
-                          <TableHead className="font-bold text-slate-700 text-center">Status</TableHead>
-                          <TableHead className="font-bold text-slate-700">Resumo da Operação</TableHead>
+                          <TableHead className="font-bold text-slate-700 px-8 py-4">Unidade</TableHead>
+                          <TableHead className="font-bold text-slate-700">Item</TableHead>
+                          <TableHead className="font-bold text-slate-700 text-center">Vencimento</TableHead>
+                          <TableHead className="font-bold text-slate-700 text-center">Ação</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {safeData.historicoMotor.map((log) => (
-                          <TableRow key={log.id} className="border-b border-slate-100 hover:bg-slate-50">
-                            <TableCell className="px-8 py-5 font-bold text-slate-900">
-                              {format(new Date(log.dataProcessamento), "dd/MM/yyyy", { locale: ptBR })}
-                            </TableCell>
-                            <TableCell className="font-medium text-slate-500">
-                              {format(new Date(log.executadoEm), "dd/MM/yyyy HH:mm")}
-                            </TableCell>
+                        {safeData.alertasRemanejamento.map((alerta) => (
+                          <TableRow key={alerta.id}>
+                            <TableCell className="px-8 py-5 font-bold">{alerta.escola.name}</TableCell>
+                            <TableCell>{alerta.item.name}</TableCell>
                             <TableCell className="text-center">
-                              <Badge className={log.status === 'SUCESSO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>
-                                {log.status}
+                              <Badge className={`${getAlertColor(alerta.dataVencimento)} text-white border-none`}>
+                                {alerta.dataVencimento ? format(new Date(alerta.dataVencimento), "dd/MM/yyyy") : "AVISO"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-slate-500 text-sm italic">{log.resumo || "Sem detalhes adicionais"}</TableCell>
+                            <TableCell className="text-center">
+                              <Button size="sm" variant="outline" onClick={() => handleResolveAlert(alerta.id)}>Resolvido</Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -621,141 +580,135 @@ export const Dashboard: React.FC = () => {
               </div>
             )}
 
-            {abaAtiva === 'FALTAS' && (
+            {abaAtiva === 'RESTRICOES' && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
-                <div className="flex items-center gap-2 px-1 text-red-600">
-                  <AlertTriangle className="h-6 w-6" />
-                  <h2 className="text-2xl font-black tracking-tight">Atenção Requerida: Estoques Negativos</h2>
-                </div>
-                {alertCount === 0 ? (
-                  <Card className="border-dashed border-2 bg-emerald-50/50 shadow-none border-emerald-200">
-                    <CardContent className="flex flex-col items-center justify-center py-12 text-center text-emerald-700 font-bold">
-                      Tudo certo com o estoque físico! Nenhuma ruptura detectada.
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="shadow-xl border-none overflow-hidden bg-white">
-                    <CardHeader className="bg-red-600 text-white px-8 py-6">
-                      <div className="flex items-center gap-3">
-                        <PackageSearch className="h-6 w-6" />
-                        <div>
-                          <CardTitle className="text-lg text-white">Relatório de Ruptura</CardTitle>
-                          <CardDescription className="text-red-100">Itens que excederam o estoque físico.</CardDescription>
+                <h2 className="text-2xl font-black tracking-tight text-rose-600">Mapa de Dietas Especiais</h2>
+                <Card className="shadow-xl border-none overflow-hidden bg-white">
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-slate-100">
+                      {demandasAgrupadasPorEscola.map((escola, idx) => (
+                        <div key={idx} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="font-bold text-slate-700">{escola.nomeEscola}</div>
+                          <div className="flex flex-wrap gap-2">
+                            {escola.restricoes.map((r, i) => (
+                              <span key={i} className="bg-rose-50 text-rose-700 px-3 py-1 rounded-md text-xs font-bold border border-rose-100">
+                                {r.quantidade} {r.tipoDieta?.nome}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow>
-                            <TableHead className="font-bold text-slate-700 px-8 py-4">Escola / Unidade</TableHead>
-                            <TableHead className="font-bold text-slate-700">Item / Produto</TableHead>
-                            <TableHead className="font-bold text-slate-700 text-center">Saldo Atual</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {safeData.alertasEstoque.map((alerta) => (
-                            <TableRow key={alerta.id} className="border-b border-slate-100 hover:bg-red-50/10">
-                              <TableCell className="px-8 py-5 font-bold text-slate-900">{alerta.escola.name}</TableCell>
-                              <TableCell className="font-medium text-slate-600">{alerta.item.name}</TableCell>
-                              <TableCell className="text-center font-black text-red-600">{alerta.quantidade}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
-            {abaAtiva === 'RESTRICOES' && (
+            {abaAtiva === 'FALTAS' && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
-                <div className="flex items-center gap-2 px-1 text-rose-600">
-                  <ShieldAlert className="h-6 w-6" />
-                  <h2 className="text-2xl font-black tracking-tight">Mapa de Restrições por Unidade</h2>
-                </div>
+                <h2 className="text-2xl font-black tracking-tight text-red-600">Rupturas de Estoque</h2>
                 <Card className="shadow-xl border-none overflow-hidden bg-white">
                   <CardContent className="p-0">
-                    {demandasAgrupadasPorEscola.length === 0 ? (
-                      <div className="p-12 text-center text-slate-500 font-medium">Nenhuma restrição alimentar cadastrada.</div>
-                    ) : (
-                      <div className="divide-y divide-slate-100">
-                        {demandasAgrupadasPorEscola.map((escola, index) => (
-                          <div key={index} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                            <div className="font-bold text-slate-700 text-lg">{escola.nomeEscola}</div>
-                            <div className="flex flex-wrap gap-2">
-                              {escola.restricoes.map((restricao, i) => (
-                                <span key={i} className="bg-rose-50 border border-rose-100 text-rose-700 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-tight flex items-center gap-1.5">
-                                  {restricao.quantidade} {restricao.tipoDieta?.nome}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="font-bold text-slate-700 px-8 py-4">Unidade</TableHead>
+                          <TableHead className="font-bold text-slate-700">Item</TableHead>
+                          <TableHead className="font-bold text-slate-700 text-center">Saldo</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {safeData.alertasEstoque.map((alerta) => (
+                          <TableRow key={alerta.id}>
+                            <TableCell className="px-8 py-5 font-bold">{alerta.escola.name}</TableCell>
+                            <TableCell>{alerta.item.name}</TableCell>
+                            <TableCell className="text-center font-black text-red-600">{alerta.quantidade}</TableCell>
+                          </TableRow>
                         ))}
-                      </div>
-                    )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            
+            {abaAtiva === 'MOTOR' && (
+              <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
+                <h2 className="text-2xl font-black tracking-tight text-slate-900">Logs do Processamento</h2>
+                <Card className="shadow-xl border-none overflow-hidden bg-white">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-slate-50">
+                        <TableRow>
+                          <TableHead className="font-bold text-slate-700 px-8 py-4">Referência</TableHead>
+                          <TableHead className="font-bold text-slate-700">Status</TableHead>
+                          <TableHead className="font-bold text-slate-700">Resumo</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {safeData.historicoMotor.map((log) => (
+                          <TableRow key={log.id}>
+                            <TableCell className="px-8 py-5 font-bold">{format(new Date(log.dataProcessamento), "dd/MM/yyyy")}</TableCell>
+                            <TableCell><Badge className={log.status === 'SUCESSO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>{log.status}</Badge></TableCell>
+                            <TableCell className="text-slate-500 text-sm italic">{log.resumo}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </CardContent>
                 </Card>
               </div>
             )}
           </div>
 
-          {/* PAINEL DE ATENÇÃO (WIDGETS ESTRATÉGICOS) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-            {/* WIDGET 1: Top Divergências */}
-            <div className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            <div className="bg-white rounded-xl border border-rose-100 shadow-sm overflow-hidden">
               <div className="bg-rose-50 border-b border-rose-100 p-4 flex justify-between items-center">
                 <h3 className="font-bold text-rose-800 flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-rose-600" /> Top Divergências de Estoque
+                  <TrendingDown className="w-5 h-5 text-rose-600" /> Divergências Críticas
                 </h3>
-                <span className="text-[10px] uppercase font-bold text-rose-400 bg-rose-100 px-2 py-0.5 rounded-full">Auditoria</span>
               </div>
               <div className="p-4 space-y-0 divide-y divide-slate-100 max-h-[260px] overflow-y-auto">
-                {divergenciasFiltradas.length === 0 ? (
-                  <p className="p-2 text-center text-sm text-slate-400">Nenhum alerta para esta unidade.</p>
+                {divergencias.length === 0 ? (
+                  <p className="p-2 text-center text-sm text-slate-400">Sem divergências críticas.</p>
                 ) : (
-                  divergenciasFiltradas.map(item => (
-                    <div key={item.id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
+                  divergencias.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-3">
                       <div>
                         <p className="font-semibold text-slate-700 text-sm">{item.escolaNome}</p>
                         <p className="text-xs text-slate-400">{item.produto}</p>
                       </div>
-                      <span className="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-md font-bold text-xs shrink-0 ml-3">{item.valor}</span>
+                      <span className="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-md font-bold text-xs">{item.valor}</span>
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            {/* WIDGET 2: Vencimentos Críticos */}
-            <div className="bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden">
               <div className="bg-amber-50 border-b border-amber-100 p-4 flex justify-between items-center">
                 <h3 className="font-bold text-amber-800 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-amber-600" /> Vencimentos Críticos
+                  <Clock className="w-5 h-5 text-amber-600" /> Vencimentos Próximos
                 </h3>
-                <span className="text-[10px] uppercase font-bold text-amber-500 bg-amber-100 px-2 py-0.5 rounded-full">Próx. 30 Dias</span>
               </div>
               <div className="p-4 space-y-0 divide-y divide-slate-100 max-h-[260px] overflow-y-auto">
-                {vencimentosFiltrados.length === 0 ? (
-                  <p className="p-2 text-center text-sm text-emerald-600 font-medium">Nenhum produto próximo do vencimento.</p>
+                {vencimentos.length === 0 ? (
+                  <p className="p-2 text-center text-sm text-emerald-600 font-medium">Estoque saudável.</p>
                 ) : (
-                  vencimentosFiltrados.map(item => (
-                    <div key={item.id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
+                  vencimentos.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center py-3">
                       <div>
                         <p className="font-semibold text-slate-700 text-sm">{item.produto}</p>
                         <p className="text-xs text-slate-400">{item.escolaNome}</p>
                       </div>
-                      <span className={`${getTagStyleVencimento(item.diasParaVencer)} px-2.5 py-1 rounded-md font-bold text-xs shrink-0 ml-3`}>
-                        Vence em {item.diasParaVencer} dia{item.diasParaVencer !== 1 ? 's' : ''}
+                      <span className={`${getTagStyleVencimento(item.diasParaVencer)} px-2.5 py-1 rounded-md font-bold text-xs`}>
+                        {item.diasParaVencer} dias
                       </span>
                     </div>
                   ))
                 )}
               </div>
             </div>
-
           </div>
         </>
       )}
