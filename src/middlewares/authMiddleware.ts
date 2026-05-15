@@ -34,7 +34,14 @@ export function verificarToken(req: Request, res: Response, next: NextFunction) 
 
 export function permitirRoles(rolesPermitidas: string[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !rolesPermitidas.includes(req.user.role)) {
+    if (!req.user) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    const roleUsuario = req.user.role.toUpperCase().trim();
+    const rolesPermitidasUpper = rolesPermitidas.map(r => r.toUpperCase().trim());
+
+    if (!rolesPermitidasUpper.includes(roleUsuario)) {
       return res.status(403).json({ error: 'Acesso negado' });
     }
 

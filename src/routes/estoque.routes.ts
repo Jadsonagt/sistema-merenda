@@ -36,13 +36,13 @@ estoqueRoutes.post('/escolas/:escolaId/estoque/descarte',
 // Entradas e Remanejamentos (Legado/Suporte)
 estoqueRoutes.post('/estoque/entrada', 
   verificarToken, 
-  permitirRoles(['ADMIN']), 
+  permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA']), 
   estoqueController.registrarEntrada
 );
 
 estoqueRoutes.post('/estoque/remanejamento', 
   verificarToken, 
-  permitirRoles(['ADMIN']), 
+  permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA']), 
   estoqueController.remanejar
 );
 

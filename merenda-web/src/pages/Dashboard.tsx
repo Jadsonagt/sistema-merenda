@@ -114,7 +114,20 @@ export const Dashboard: React.FC = () => {
     quantidadeRisco: '',
     dataVencimento: ''
   });
-  const [rotaFiltro, setRotaFiltro] = useState<string>("all");
+  const [rotaFiltro, setRotaFiltro] = useState<string>(() => {
+    const userStr = localStorage.getItem('usuario');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.role?.toUpperCase() === 'SUPERVISORA' && user.rotaId) {
+          return user.rotaId;
+        }
+      } catch (e) {
+        return "all";
+      }
+    }
+    return "all";
+  });
 
   const isAdmin = useMemo(() => userProfile?.role?.toUpperCase() === 'ADMIN', [userProfile]);
 

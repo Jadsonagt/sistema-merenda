@@ -8,7 +8,7 @@ const relatorioController = new RelatorioController();
 // Relatório de Baixas e Divergências
 relatorioRoutes.get('/baixas', 
   verificarToken, 
-  permitirRoles(['ADMIN', 'SUPERVISORA']), 
+  permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA']), 
   relatorioController.listarBaixasEDivergencias
 );
 
