@@ -462,6 +462,35 @@ export const Dashboard: React.FC = () => {
                 <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Toque para listar</p>
               </CardContent>
             </Card>
+            <div className="block md:hidden w-full">
+              {abaAtiva === 'UNIDADES' && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 my-2">
+                  <h2 className="text-lg font-black tracking-tight text-blue-600">Unidades da Rede</h2>
+                  <Card className="shadow-md border-none overflow-hidden bg-white">
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Nome</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Tipo</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {safeData.escolasLista.map((escola) => (
+                            <TableRow key={escola.id} className="hover:bg-blue-50/20 transition-colors">
+                              <TableCell className="px-2 py-3 font-bold text-slate-900 whitespace-normal break-words hyphens-auto text-sm">{escola.name}</TableCell>
+                              <TableCell className="px-2 py-3 font-medium text-slate-500 text-xs">{escola.type}</TableCell>
+                              <TableCell className="px-2 py-3 text-center text-xs"><Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[10px]">Ativa</Badge></TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
 
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'RESTRICOES' ? null : 'RESTRICOES')}
@@ -478,6 +507,31 @@ export const Dashboard: React.FC = () => {
                 <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Demandas especiais</p>
               </CardContent>
             </Card>
+            <div className="block md:hidden w-full">
+              {abaAtiva === 'RESTRICOES' && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 my-2">
+                  <h2 className="text-lg font-black tracking-tight text-rose-600">Mapa de Dietas Especiais</h2>
+                  <Card className="shadow-md border-none overflow-hidden bg-white">
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-slate-100">
+                        {demandasAgrupadasPorEscola.map((escola, idx) => (
+                          <div key={idx} className="p-3 flex flex-col gap-2 border-b border-slate-100">
+                            <div className="font-bold text-slate-700 text-sm whitespace-normal break-words hyphens-auto">{escola.nomeEscola}</div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {escola.restricoes.map((r, i) => (
+                                <span key={i} className="bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md text-[10px] font-bold border border-rose-100 whitespace-normal break-words">
+                                  {r.quantidade} {r.tipoDieta?.nome}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
 
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'REMANEJAMENTOS' ? null : 'REMANEJAMENTOS')}
@@ -494,6 +548,43 @@ export const Dashboard: React.FC = () => {
                 <p className="text-[10px] mt-1 font-medium italic opacity-80">Riscos de validade</p>
               </CardContent>
             </Card>
+            <div className="block md:hidden w-full">
+              {abaAtiva === 'REMANEJAMENTOS' && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 my-2">
+                  <h2 className="text-lg font-black tracking-tight text-amber-600">Remanejamentos Preventivos</h2>
+                  <Card className="shadow-md border-none overflow-hidden bg-white">
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Unidade</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Item</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Vencimento</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Ação</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {safeData.alertasRemanejamento.map((alerta) => (
+                            <TableRow key={alerta.id}>
+                              <TableCell className="px-2 py-3 font-bold whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
+                              <TableCell className="px-2 py-3 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
+                              <TableCell className="px-2 py-3 text-center text-xs">
+                                <Badge className={`${getAlertColor(alerta.dataVencimento)} text-white border-none text-[10px]`}>
+                                  {alerta.dataVencimento ? format(new Date(alerta.dataVencimento), "dd/MM/yyyy") : "AVISO"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="px-2 py-3 text-center text-xs">
+                                <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => handleResolveAlert(alerta.id)}>Resolvido</Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
 
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'MOTOR' ? null : 'MOTOR')}
@@ -512,6 +603,35 @@ export const Dashboard: React.FC = () => {
                 <p className="text-[10px] text-slate-400 mt-1 font-medium italic">Último processamento</p>
               </CardContent>
             </Card>
+            <div className="block md:hidden w-full">
+              {abaAtiva === 'MOTOR' && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 my-2">
+                  <h2 className="text-lg font-black tracking-tight text-slate-900">Logs do Processamento</h2>
+                  <Card className="shadow-md border-none overflow-hidden bg-white">
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Referência</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Status</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Resumo</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {safeData.historicoMotor.map((log) => (
+                            <TableRow key={log.id}>
+                              <TableCell className="px-2 py-3 font-bold text-xs">{format(new Date(log.dataProcessamento), "dd/MM/yyyy")}</TableCell>
+                              <TableCell className="px-2 py-3 text-xs"><Badge className={`${log.status === 'SUCESSO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} text-[10px]`}>{log.status}</Badge></TableCell>
+                              <TableCell className="px-2 py-3 text-slate-500 text-xs italic whitespace-normal break-words hyphens-auto">{log.resumo}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
 
             <Card
               onClick={() => setAbaAtiva(abaAtiva === 'FALTAS' ? null : 'FALTAS')}
@@ -528,9 +648,38 @@ export const Dashboard: React.FC = () => {
                 <p className="text-[10px] mt-1 font-medium italic opacity-80">Estoques negativos</p>
               </CardContent>
             </Card>
+            <div className="block md:hidden w-full">
+              {abaAtiva === 'FALTAS' && (
+                <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-4 my-2">
+                  <h2 className="text-lg font-black tracking-tight text-red-600">Rupturas de Estoque</h2>
+                  <Card className="shadow-md border-none overflow-hidden bg-white">
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Unidade</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Item</TableHead>
+                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Saldo</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {safeData.alertasEstoque.map((alerta) => (
+                            <TableRow key={alerta.id}>
+                              <TableCell className="px-2 py-3 font-bold whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
+                              <TableCell className="px-2 py-3 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
+                              <TableCell className="px-2 py-3 text-center font-black text-red-600 text-xs">{alerta.quantidade}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="min-h-[200px]">
+          <div className="hidden md:block min-h-[200px]">
             {abaAtiva === 'UNIDADES' && (
               <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
                 <h2 className="text-2xl font-black tracking-tight text-blue-600">Unidades da Rede</h2>
@@ -547,7 +696,7 @@ export const Dashboard: React.FC = () => {
                       <TableBody>
                         {safeData.escolasLista.map((escola) => (
                           <TableRow key={escola.id} className="hover:bg-blue-50/20 transition-colors">
-                            <TableCell className="px-8 py-5 font-bold text-slate-900">{escola.name}</TableCell>
+                            <TableCell className="px-8 py-5 font-bold text-slate-900 whitespace-normal break-words hyphens-auto">{escola.name}</TableCell>
                             <TableCell className="font-medium text-slate-500">{escola.type}</TableCell>
                             <TableCell className="text-center"><Badge className="bg-emerald-50 text-emerald-600 border-emerald-100">Ativa</Badge></TableCell>
                           </TableRow>
@@ -576,8 +725,8 @@ export const Dashboard: React.FC = () => {
                       <TableBody>
                         {safeData.alertasRemanejamento.map((alerta) => (
                           <TableRow key={alerta.id}>
-                            <TableCell className="px-8 py-5 font-bold">{alerta.escola.name}</TableCell>
-                            <TableCell>{alerta.item.name}</TableCell>
+                            <TableCell className="px-8 py-5 font-bold whitespace-normal break-words hyphens-auto">{alerta.escola.name}</TableCell>
+                            <TableCell className="whitespace-normal break-words hyphens-auto">{alerta.item.name}</TableCell>
                             <TableCell className="text-center">
                               <Badge className={`${getAlertColor(alerta.dataVencimento)} text-white border-none`}>
                                 {alerta.dataVencimento ? format(new Date(alerta.dataVencimento), "dd/MM/yyyy") : "AVISO"}
@@ -603,7 +752,7 @@ export const Dashboard: React.FC = () => {
                     <div className="divide-y divide-slate-100">
                       {demandasAgrupadasPorEscola.map((escola, idx) => (
                         <div key={idx} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="font-bold text-slate-700">{escola.nomeEscola}</div>
+                          <div className="font-bold text-slate-700 whitespace-normal break-words hyphens-auto">{escola.nomeEscola}</div>
                           <div className="flex flex-wrap gap-2">
                             {escola.restricoes.map((r, i) => (
                               <span key={i} className="bg-rose-50 text-rose-700 px-3 py-1 rounded-md text-xs font-bold border border-rose-100">
@@ -635,8 +784,8 @@ export const Dashboard: React.FC = () => {
                       <TableBody>
                         {safeData.alertasEstoque.map((alerta) => (
                           <TableRow key={alerta.id}>
-                            <TableCell className="px-8 py-5 font-bold">{alerta.escola.name}</TableCell>
-                            <TableCell>{alerta.item.name}</TableCell>
+                            <TableCell className="px-8 py-5 font-bold whitespace-normal break-words hyphens-auto">{alerta.escola.name}</TableCell>
+                            <TableCell className="whitespace-normal break-words hyphens-auto">{alerta.item.name}</TableCell>
                             <TableCell className="text-center font-black text-red-600">{alerta.quantidade}</TableCell>
                           </TableRow>
                         ))}
@@ -665,7 +814,7 @@ export const Dashboard: React.FC = () => {
                           <TableRow key={log.id}>
                             <TableCell className="px-8 py-5 font-bold">{format(new Date(log.dataProcessamento), "dd/MM/yyyy")}</TableCell>
                             <TableCell><Badge className={log.status === 'SUCESSO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}>{log.status}</Badge></TableCell>
-                            <TableCell className="text-slate-500 text-sm italic">{log.resumo}</TableCell>
+                            <TableCell className="text-slate-500 text-sm italic whitespace-normal break-words hyphens-auto">{log.resumo}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
