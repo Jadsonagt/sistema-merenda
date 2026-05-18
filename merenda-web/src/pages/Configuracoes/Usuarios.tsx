@@ -136,7 +136,7 @@ export const UsuariosPage = () => {
       console.log('ID da Rota sendo enviado:', payload.rotaId);
       console.log('Enviando payload para API:', payload);
 
-      let result;
+      let result: any;
 
       if (editingUsuario) {
         result = await updateUsuario(editingUsuario.id, payload);
