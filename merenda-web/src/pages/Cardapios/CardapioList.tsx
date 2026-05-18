@@ -363,7 +363,7 @@ export const CardapioList: React.FC = () => {
       {/* Cabeçalho */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+          <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground flex items-center gap-3">
             <CalendarDays className="h-8 w-8 text-blue-600" />
             Planejamento de Cardápio
           </h1>
@@ -372,9 +372,9 @@ export const CardapioList: React.FC = () => {
       </div>
 
       {/* Cabeçalho e Filtros */}
-      <div className="flex flex-col md:flex-row justify-between gap-4 bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+      <div className="flex flex-col md:flex-row justify-between gap-4 bg-white rounded-lg border border-slate-200 shadow-sm p-4 overflow-hidden">
         {/* Navegação Mês/Ano */}
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-4 py-2">
           <Button variant="outline" size="sm" onClick={handlePrevMonth} className="h-9 w-9 p-0">
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -387,12 +387,12 @@ export const CardapioList: React.FC = () => {
         </div>
 
         {/* Filtro de Segmento (Tabs) */}
-        <div className="flex flex-wrap items-center justify-center md:justify-end gap-1.5">
+        <div className="flex overflow-x-auto pb-2 -mx-4 px-4 gap-2 no-scrollbar snap-x items-center md:justify-end">
           {['TODOS', ...TIPOS_ESCOLA_OPTIONS].map((tipo) => (
             <button
               key={tipo}
               onClick={() => setSegmentoFiltro(tipo)}
-              className={`px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all ${
+              className={`whitespace-nowrap shrink-0 snap-start px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase transition-all ${
                 segmentoFiltro === tipo
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
@@ -409,9 +409,9 @@ export const CardapioList: React.FC = () => {
         <div className="py-12 text-center text-slate-500">Carregando cardápios...</div>
       ) : (
         <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
-          <div className="flex flex-col gap-1 min-w-[1000px]">
+          <div className="flex flex-col gap-4 w-full min-w-0 lg:min-w-[1000px]">
             {/* Cabeçalho da grade */}
-            <div className="grid grid-cols-5 gap-1">
+            <div className="hidden lg:grid grid-cols-5 gap-4">
               {DIAS_SEMANA.map((dia) => (
                 <div key={dia} className="bg-slate-800 text-white text-center text-sm font-semibold py-2.5 rounded-t-md">
                   {dia}
@@ -421,10 +421,10 @@ export const CardapioList: React.FC = () => {
 
             {/* Semanas */}
             {weeks.map((week, weekIdx) => (
-              <div key={weekIdx} className="grid grid-cols-5 gap-1">
+              <div key={weekIdx} className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                 {week.map((slot, dayIdx) => {
                   if (!slot) {
-                    return <div key={dayIdx} className="min-h-[120px] bg-slate-50 rounded-md border border-slate-100" />;
+                    return <div key={dayIdx} className="hidden lg:block min-h-[120px] bg-slate-50 rounded-md border border-slate-100" />;
                   }
 
                   const dayCardapios = cardapiosByDate[slot.dateStr] || [];
@@ -460,7 +460,7 @@ export const CardapioList: React.FC = () => {
                       {/* Número do dia */}
                       <div className="flex justify-between items-center h-5">
                         <span className={`text-[10px] font-black ${isToday ? 'text-orange-700' : isPast ? 'text-slate-400' : 'text-slate-500'} uppercase`}>
-                          {slot.day}
+                          {slot.day} <span className="lg:hidden ml-1 text-slate-500">({DIAS_SEMANA[dayIdx]})</span>
                         </span>
                         <div className="flex items-center gap-1">
                           {isToday && (
