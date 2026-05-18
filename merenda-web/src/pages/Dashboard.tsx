@@ -318,10 +318,10 @@ export const Dashboard: React.FC = () => {
             <p className="text-slate-500 mt-1 font-medium italic">Monitoramento em tempo real da rede municipal de alimentação.</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3 mt-4 md:mt-0">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 gap-2">
+                <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-200 gap-2">
                   <Plus className="h-4 w-4" />
                   Novo Alerta de Validade
                 </Button>
@@ -376,7 +376,7 @@ export const Dashboard: React.FC = () => {
               </DialogContent>
             </Dialog>
 
-            <Badge variant="outline" className="px-4 py-1.5 border-slate-200 text-slate-500 font-bold bg-white">
+            <Badge variant="outline" className="w-full sm:w-auto flex justify-center py-2 text-sm border-slate-200 text-slate-500 font-bold bg-white">
               Atualizado: {format(new Date(), "HH:mm:ss")}
             </Badge>
           </div>
@@ -468,7 +468,7 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-blue-600">Unidades da Rede</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <div className="w-full overflow-x-auto pb-2">
+                      <div className="w-[calc(100vw-4rem)] overflow-x-auto pb-4">
                         <Table>
                           <TableHeader className="bg-slate-50">
                             <TableRow>
@@ -480,7 +480,7 @@ export const Dashboard: React.FC = () => {
                           <TableBody>
                             {safeData.escolasLista.map((escola) => (
                               <TableRow key={escola.id} className="hover:bg-blue-50/20 transition-colors">
-                                <TableCell className="px-3 py-2 font-bold text-slate-900 min-w-[120px] whitespace-normal break-words hyphens-auto text-sm">{escola.name}</TableCell>
+                                <TableCell className="px-3 py-2 font-bold text-slate-900 min-w-[120px] whitespace-normal break-words hyphens-auto text-xs">{escola.name}</TableCell>
                                 <TableCell className="px-3 py-2 font-medium text-slate-500 text-xs">{escola.type}</TableCell>
                                 <TableCell className="px-3 py-2 text-center text-xs"><Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[10px]">Ativa</Badge></TableCell>
                               </TableRow>
@@ -556,7 +556,7 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-amber-600">Remanejamentos Preventivos</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <div className="w-full overflow-x-auto pb-2">
+                      <div className="w-[calc(100vw-4rem)] overflow-x-auto pb-4">
                         <Table>
                           <TableHeader className="bg-slate-50">
                             <TableRow>
@@ -569,7 +569,7 @@ export const Dashboard: React.FC = () => {
                           <TableBody>
                             {safeData.alertasRemanejamento.map((alerta) => (
                               <TableRow key={alerta.id}>
-                                <TableCell className="px-3 py-2 font-bold min-w-[120px] whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
+                                <TableCell className="px-3 py-2 font-bold min-w-[120px] whitespace-normal break-words hyphens-auto text-xs">{alerta.escola.name}</TableCell>
                                 <TableCell className="px-3 py-2 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
                                 <TableCell className="px-3 py-2 text-center text-xs">
                                   <Badge className={`${getAlertColor(alerta.dataVencimento)} text-white border-none text-[10px]`}>
@@ -613,7 +613,7 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-slate-900">Logs do Processamento</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <div className="w-full overflow-x-auto pb-2">
+                      <div className="w-[calc(100vw-4rem)] overflow-x-auto pb-4">
                         <Table>
                           <TableHeader className="bg-slate-50">
                             <TableRow>
@@ -660,7 +660,7 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-red-600">Rupturas de Estoque</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <div className="w-full overflow-x-auto pb-2">
+                      <div className="w-[calc(100vw-4rem)] overflow-x-auto pb-4">
                         <Table>
                           <TableHeader className="bg-slate-50">
                             <TableRow>
@@ -672,7 +672,7 @@ export const Dashboard: React.FC = () => {
                           <TableBody>
                             {safeData.alertasEstoque.map((alerta) => (
                               <TableRow key={alerta.id}>
-                                <TableCell className="px-3 py-2 font-bold min-w-[120px] whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
+                                <TableCell className="px-3 py-2 font-bold min-w-[120px] whitespace-normal break-words hyphens-auto text-xs">{alerta.escola.name}</TableCell>
                                 <TableCell className="px-3 py-2 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
                                 <TableCell className="px-3 py-2 text-center font-black text-red-600 text-xs">{alerta.quantidade}</TableCell>
                               </TableRow>
