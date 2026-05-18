@@ -468,24 +468,26 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-blue-600">Unidades da Rede</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Nome</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Tipo</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {safeData.escolasLista.map((escola) => (
-                            <TableRow key={escola.id} className="hover:bg-blue-50/20 transition-colors">
-                              <TableCell className="px-2 py-3 font-bold text-slate-900 whitespace-normal break-words hyphens-auto text-sm">{escola.name}</TableCell>
-                              <TableCell className="px-2 py-3 font-medium text-slate-500 text-xs">{escola.type}</TableCell>
-                              <TableCell className="px-2 py-3 text-center text-xs"><Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[10px]">Ativa</Badge></TableCell>
+                      <div className="w-full overflow-x-auto pb-2">
+                        <Table>
+                          <TableHeader className="bg-slate-50">
+                            <TableRow>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Nome</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Tipo</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-center text-xs">Status</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {safeData.escolasLista.map((escola) => (
+                              <TableRow key={escola.id} className="hover:bg-blue-50/20 transition-colors">
+                                <TableCell className="px-3 py-2 font-bold text-slate-900 min-w-[120px] whitespace-normal break-words hyphens-auto text-sm">{escola.name}</TableCell>
+                                <TableCell className="px-3 py-2 font-medium text-slate-500 text-xs">{escola.type}</TableCell>
+                                <TableCell className="px-3 py-2 text-center text-xs"><Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 text-[10px]">Ativa</Badge></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -554,32 +556,34 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-amber-600">Remanejamentos Preventivos</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Unidade</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Item</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Vencimento</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Ação</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {safeData.alertasRemanejamento.map((alerta) => (
-                            <TableRow key={alerta.id}>
-                              <TableCell className="px-2 py-3 font-bold whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
-                              <TableCell className="px-2 py-3 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
-                              <TableCell className="px-2 py-3 text-center text-xs">
-                                <Badge className={`${getAlertColor(alerta.dataVencimento)} text-white border-none text-[10px]`}>
-                                  {alerta.dataVencimento ? format(new Date(alerta.dataVencimento), "dd/MM/yyyy") : "AVISO"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="px-2 py-3 text-center text-xs">
-                                <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => handleResolveAlert(alerta.id)}>Resolvido</Button>
-                              </TableCell>
+                      <div className="w-full overflow-x-auto pb-2">
+                        <Table>
+                          <TableHeader className="bg-slate-50">
+                            <TableRow>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Unidade</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Item</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-center text-xs">Vencimento</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-center text-xs">Ação</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {safeData.alertasRemanejamento.map((alerta) => (
+                              <TableRow key={alerta.id}>
+                                <TableCell className="px-3 py-2 font-bold min-w-[120px] whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
+                                <TableCell className="px-3 py-2 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
+                                <TableCell className="px-3 py-2 text-center text-xs">
+                                  <Badge className={`${getAlertColor(alerta.dataVencimento)} text-white border-none text-[10px]`}>
+                                    {alerta.dataVencimento ? format(new Date(alerta.dataVencimento), "dd/MM/yyyy") : "AVISO"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-3 py-2 text-center text-xs">
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => handleResolveAlert(alerta.id)}>Resolvido</Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -609,24 +613,26 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-slate-900">Logs do Processamento</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Referência</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Status</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Resumo</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {safeData.historicoMotor.map((log) => (
-                            <TableRow key={log.id}>
-                              <TableCell className="px-2 py-3 font-bold text-xs">{format(new Date(log.dataProcessamento), "dd/MM/yyyy")}</TableCell>
-                              <TableCell className="px-2 py-3 text-xs"><Badge className={`${log.status === 'SUCESSO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} text-[10px]`}>{log.status}</Badge></TableCell>
-                              <TableCell className="px-2 py-3 text-slate-500 text-xs italic whitespace-normal break-words hyphens-auto">{log.resumo}</TableCell>
+                      <div className="w-full overflow-x-auto pb-2">
+                        <Table>
+                          <TableHeader className="bg-slate-50">
+                            <TableRow>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Referência</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Status</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Resumo</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {safeData.historicoMotor.map((log) => (
+                              <TableRow key={log.id}>
+                                <TableCell className="px-3 py-2 font-bold text-xs">{format(new Date(log.dataProcessamento), "dd/MM/yyyy")}</TableCell>
+                                <TableCell className="px-3 py-2 text-xs"><Badge className={`${log.status === 'SUCESSO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'} text-[10px]`}>{log.status}</Badge></TableCell>
+                                <TableCell className="px-3 py-2 text-slate-500 text-xs italic whitespace-normal break-words hyphens-auto">{log.resumo}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -654,24 +660,26 @@ export const Dashboard: React.FC = () => {
                   <h2 className="text-lg font-black tracking-tight text-red-600">Rupturas de Estoque</h2>
                   <Card className="shadow-md border-none overflow-hidden bg-white">
                     <CardContent className="p-0">
-                      <Table>
-                        <TableHeader className="bg-slate-50">
-                          <TableRow>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Unidade</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-xs">Item</TableHead>
-                            <TableHead className="font-bold text-slate-700 px-2 py-3 text-center text-xs">Saldo</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {safeData.alertasEstoque.map((alerta) => (
-                            <TableRow key={alerta.id}>
-                              <TableCell className="px-2 py-3 font-bold whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
-                              <TableCell className="px-2 py-3 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
-                              <TableCell className="px-2 py-3 text-center font-black text-red-600 text-xs">{alerta.quantidade}</TableCell>
+                      <div className="w-full overflow-x-auto pb-2">
+                        <Table>
+                          <TableHeader className="bg-slate-50">
+                            <TableRow>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Unidade</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-xs">Item</TableHead>
+                              <TableHead className="font-bold text-slate-700 px-3 py-2 text-center text-xs">Saldo</TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {safeData.alertasEstoque.map((alerta) => (
+                              <TableRow key={alerta.id}>
+                                <TableCell className="px-3 py-2 font-bold min-w-[120px] whitespace-normal break-words hyphens-auto text-sm">{alerta.escola.name}</TableCell>
+                                <TableCell className="px-3 py-2 whitespace-normal break-words hyphens-auto text-xs">{alerta.item.name}</TableCell>
+                                <TableCell className="px-3 py-2 text-center font-black text-red-600 text-xs">{alerta.quantidade}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
