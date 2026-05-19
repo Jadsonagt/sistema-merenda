@@ -374,15 +374,23 @@ export const CardapioList: React.FC = () => {
       {/* Cabeçalho e Filtros */}
       <div className="flex flex-col md:flex-row justify-between gap-4 bg-white rounded-lg border border-slate-200 shadow-sm p-4 overflow-hidden">
         {/* Navegação Mês/Ano */}
-        <div className="flex items-center justify-center gap-4 py-2">
-          <Button variant="outline" size="sm" onClick={handlePrevMonth} className="h-9 w-9 p-0">
-            <ChevronLeft className="h-4 w-4" />
+        <div className="flex items-center justify-center gap-6 w-full py-4">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevMonth} 
+            className="h-10 w-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 p-0"
+          >
+            <ChevronLeft className="h-4 w-4 text-slate-600" />
           </Button>
-          <h2 className="text-xl font-bold text-slate-800 min-w-[220px] text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800 text-center min-w-[140px]">
             {MESES[currentMonth - 1]} de {currentYear}
           </h2>
-          <Button variant="outline" size="sm" onClick={handleNextMonth} className="h-9 w-9 p-0">
-            <ChevronRight className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            onClick={handleNextMonth} 
+            className="h-10 w-10 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 p-0"
+          >
+            <ChevronRight className="h-4 w-4 text-slate-600" />
           </Button>
         </div>
 
