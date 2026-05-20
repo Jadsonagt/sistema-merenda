@@ -18,6 +18,6 @@ export function calcularDistanciaHaversine(lat1: number, lon1: number, lat2: num
   
   console.log(`[Haversine] Distância exata calculada (com margem de 20%): ${distancia}km`);
   
-  // Mudança para Math.round para ser mais fiel ao hodômetro real
-  return Math.round(distancia); 
+  // Remove arredondamento automático para permitir decimais na edição manual
+  return Number(distancia.toFixed(1)); 
 }

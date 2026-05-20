@@ -192,6 +192,7 @@ const RoteiroForm: React.FC<{
                       <div className="flex items-center gap-1.5">
                         <Input
                           type="number"
+                          step="0.1"
                           className={`w-20 h-8 text-right font-mono font-bold text-xs ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
                           value={t.km || 0}
                           onChange={e => onUpdateKm(idx, Number(e.target.value))}
@@ -591,12 +592,13 @@ export const DiarioBordo: React.FC = () => {
             <div className="flex gap-2 items-center">
               <Input 
                 type="number" 
+                step="0.1"
                 className="h-8 text-xs font-bold text-slate-700 w-full lg:w-24 text-center" 
                 value={kmInputTemp} 
                 onChange={e => setKmInputTemp(e.target.value)}
                 onBlur={e => validarEConfirmarKm(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && validarEConfirmarKm(kmInputTemp)}
-                placeholder="Ex: 115000"
+                placeholder="Ex: 115000.5"
               />
             </div>
           </div>
@@ -663,7 +665,7 @@ export const DiarioBordo: React.FC = () => {
                           </div>
 
                           <div className="text-[9px] text-center text-slate-500 font-medium py-0.5 bg-slate-100 rounded mb-1">
-                            Odômetro: {odometrosCalculados[slot.dateStr]?.inicio.toFixed(0) || 0} → {odometrosCalculados[slot.dateStr]?.fim.toFixed(0) || 0}
+                            Odômetro: {odometrosCalculados[slot.dateStr]?.inicio.toFixed(1) || 0} → {odometrosCalculados[slot.dateStr]?.fim.toFixed(1) || 0}
                           </div>
 
                           <div className="flex flex-col gap-1 overflow-y-auto pr-1 pb-1 scrollbar-thin scrollbar-thumb-slate-200">

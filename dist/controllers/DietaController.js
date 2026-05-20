@@ -48,8 +48,14 @@ export class DietaController {
     // ================= DEMANDAS POR ESCOLA =================
     async listarDemandas(req, res) {
         try {
-            const { escolaId } = req.query;
-            const where = escolaId ? { escolaId: String(escolaId) } : {};
+            const { escolaId, rotaId } = req.query;
+            const where = {};
+            if (escolaId) {
+                where.escolaId = String(escolaId);
+            }
+            else if (rotaId) {
+                where.escola = { rotaId: String(rotaId) };
+            }
             const demandas = await prisma.demandaDieta.findMany({
                 where,
                 include: { tipoDieta: true, escola: { select: { name: true } } }

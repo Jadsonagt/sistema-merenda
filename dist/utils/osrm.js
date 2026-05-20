@@ -3,11 +3,14 @@ export async function calcularDistanciaOSRM(origem, destino) {
     try {
         // OSRM exige a ordem: longitude,latitude
         const url = `http://router.project-osrm.org/route/v1/driving/${origem.lng},${origem.lat};${destino.lng},${destino.lat}?overview=false`;
+        console.log('[OSRM] Chamando API:', url);
         const response = await axios.get(url);
         if (response.data && response.data.routes && response.data.routes.length > 0) {
             const distanciaMetros = response.data.routes[0].distance;
-            // Converte para quilômetros e arredonda para 2 casas decimais
-            const distanciaKm = parseFloat((distanciaMetros / 1000).toFixed(2));
+            const distanciaExataKm = distanciaMetros / 1000;
+            console.log(`[OSRM] Distância exata calculada: ${distanciaMetros}m (${distanciaExataKm}km)`);
+            // Mudança para Math.round para ser mais fiel ao hodômetro real, conforme solicitado
+            const distanciaKm = Math.round(distanciaExataKm);
             return distanciaKm;
         }
         return 0;

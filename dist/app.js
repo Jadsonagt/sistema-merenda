@@ -1,3 +1,4 @@
+// Trigger: Forando novo build para sincronizao - 2026-05-13
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -22,6 +23,7 @@ import { diarioRoutes } from './routes/diario.routes.js';
 import { dietaRoutes } from './routes/dieta.routes.js';
 import { relatorioRoutes } from './routes/relatorio.routes.js';
 import { usuarioRoutes } from './routes/usuario.routes.js';
+import pontoInteresseRoutes from './routes/pontoInteresse.routes.js';
 dotenv.config();
 const app = express();
 app.use(cors({
@@ -57,6 +59,7 @@ app.use('/api', diarioRoutes);
 app.use('/api', dietaRoutes);
 app.use('/api/relatorios', relatorioRoutes);
 app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/pontos-interesse', pontoInteresseRoutes);
 // Middleware Global de Tratamento de Erros
 app.use((err, req, res, next) => {
     console.error(err.stack);

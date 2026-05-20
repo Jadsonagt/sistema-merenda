@@ -1,11 +1,7 @@
 import * as XLSX from 'xlsx';
 import { format, parseISO } from 'date-fns';
 
-// Regra de negócio: 7.4 -> 8.0 | 7.3 -> 7.0
-const arredondarCustomizado = (valor: number): number => {
-  const decimal = valor - Math.floor(valor);
-  return decimal >= 0.4 ? Math.ceil(valor) : Math.floor(valor);
-};
+// Não há mais arredondamento customizado, os valores serão exatos com 1 casa decimal.
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,7 +10,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
   const linhas: any[] = [];
   const diariosOrdenados = [...diarios].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 
-  let odometroAtual = Math.round(odometroLargada);
+  let odometroAtual = Number(Number(odometroLargada).toFixed(1));
 
   diariosOrdenados.forEach((d) => {
     const dataFormatada = format(parseISO(d.data), 'dd/MM/yyyy');
@@ -26,7 +22,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
         
         // Aplica o arredondamento customizado antes de qualquer cálculo financeiro ou de odômetro
         const kmExato = Number(d.trechos[i].kmTrecho) || 0;
-        const km = arredondarCustomizado(kmExato);
+        const km = Number(kmExato.toFixed(1));
 
         const isRTR = origem.toLowerCase().includes('residência') || destino.toLowerCase().includes('residência');
         const sigla = isRTR ? 'R/T/R' : 'SUP';

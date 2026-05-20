@@ -12,8 +12,8 @@ estoqueRoutes.get('/escolas/:escolaId/inventario/historico', verificarToken, per
 // Descarte/Baixa de Estoque Manual
 estoqueRoutes.post('/escolas/:escolaId/estoque/descarte', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), estoqueController.descartar);
 // Entradas e Remanejamentos (Legado/Suporte)
-estoqueRoutes.post('/estoque/entrada', verificarToken, permitirRoles(['ADMIN']), estoqueController.registrarEntrada);
-estoqueRoutes.post('/estoque/remanejamento', verificarToken, permitirRoles(['ADMIN']), estoqueController.remanejar);
+estoqueRoutes.post('/estoque/entrada', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA']), estoqueController.registrarEntrada);
+estoqueRoutes.post('/estoque/remanejamento', verificarToken, permitirRoles(['ADMIN', 'SUPERVISOR', 'SUPERVISORA']), estoqueController.remanejar);
 estoqueRoutes.post('/remanejamentos/lote', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), estoqueController.remanejarLote);
 estoqueRoutes.get('/remanejamentos/historico', verificarToken, permitirRoles(['ADMIN', 'SUPERVISORA']), estoqueController.listarHistoricoRemanejamento);
 // Pendências de Processamento (Últimos 7 dias)

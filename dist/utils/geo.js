@@ -13,5 +13,7 @@ export function calcularDistanciaHaversine(lat1, lon1, lat2, lon2) {
     // Adiciona 20% de margem (1.2) para compensar o traçado das ruas, 
     // já que Haversine é linha reta ("as the crow flies").
     const distancia = (R * c) * 1.2;
-    return Number(distancia.toFixed(1));
+    console.log(`[Haversine] Distância exata calculada (com margem de 20%): ${distancia}km`);
+    // Mudança para Math.round para ser mais fiel ao hodômetro real
+    return Math.round(distancia);
 }

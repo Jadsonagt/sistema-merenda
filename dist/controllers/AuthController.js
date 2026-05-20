@@ -75,6 +75,7 @@ export class AuthController {
             }
             const usuario = await prisma.usuario.findUnique({
                 where: { email },
+                include: { rota: true },
             });
             if (!usuario) {
                 return res.status(401).json({ error: 'Credenciais inválidas' });
@@ -91,6 +92,8 @@ export class AuthController {
                     nome: usuario.nome,
                     email: usuario.email,
                     role: usuario.role,
+                    rotaId: usuario.rotaId,
+                    rota: usuario.rota,
                 },
                 token,
             });
@@ -171,7 +174,17 @@ export class AuthController {
                 return res.status(401).json({ error: 'Não autorizado' });
             const usuario = await prisma.usuario.findUnique({
                 where: { id: usuarioId },
-                select: { id: true, nome: true, email: true, role: true, enderecoResidencial: true, latitudeResidencial: true, longitudeResidencial: true, rotaId: true }
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    enderecoResidencial: true,
+                    latitudeResidencial: true,
+                    longitudeResidencial: true,
+                    rotaId: true,
+                    rota: true
+                }
             });
             return res.status(200).json(usuario);
         }
@@ -192,13 +205,24 @@ export class AuthController {
                     enderecoResidencial,
                     latitudeResidencial: latitudeResidencial ? Number(latitudeResidencial) : null,
                     longitudeResidencial: longitudeResidencial ? Number(longitudeResidencial) : null,
-                    rotaId
+                    rotaId: req.user?.role === 'ADMIN' ? (rotaId === 'none' ? null : rotaId) : undefined
                 },
-                select: { id: true, nome: true, email: true, role: true, enderecoResidencial: true, latitudeResidencial: true, longitudeResidencial: true, rotaId: true }
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    enderecoResidencial: true,
+                    latitudeResidencial: true,
+                    longitudeResidencial: true,
+                    rotaId: true,
+                    rota: true
+                }
             });
             return res.status(200).json(usuario);
         }
         catch (error) {
+            console.error('Erro no updateMe:', error);
             return res.status(500).json({ error: 'Erro ao atualizar dados do usuário' });
         }
     }

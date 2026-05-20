@@ -87,24 +87,35 @@ export class DiarioBordoController {
     }
     async calcularDistancia(req, res) {
         try {
-            const { origemId, destinoId } = req.body;
+            const { origemId, destinoId, origemManual, destinoManual } = req.body;
             const usuarioId = req.user?.id;
             if (!origemId || !destinoId) {
                 return res.status(400).json({ error: 'ID de origem e destino são obrigatórios.' });
             }
             // 1. Tentar buscar na tabela de Distância de Referência (Matriz de Distâncias do Município)
-            const distRef = await prisma.distanciaReferencia.findFirst({
-                where: {
-                    OR: [
-                        { origemId, destinoId },
-                        { origemId: destinoId, destinoId: origemId } // Bidirecional
-                    ]
+            // Apenas se nenhum for manual
+            if (!origemManual && !destinoManual) {
+                const distRef = await prisma.distanciaReferencia.findFirst({
+                    where: {
+                        OR: [
+                            { origemId, destinoId },
+                            { origemId: destinoId, destinoId: origemId } // Bidirecional
+                        ]
+                    }
+                });
+                if (distRef) {
+                    return res.status(200).json({ km: distRef.quilometros });
                 }
-            });
-            if (distRef) {
-                return res.status(200).json({ km: distRef.quilometros });
             }
-            const getCoords = async (id) => {
+            const getCoords = async (id, manualCoords) => {
+                if (manualCoords) {
+                    const lat = Number(manualCoords.latitude ?? manualCoords.lat);
+                    const lng = Number(manualCoords.longitude ?? manualCoords.lon ?? manualCoords.lng);
+                    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                        console.log(`[DiarioBordo] Usando coordenadas manuais para ${id}:`, { lat, lng });
+                        return { lat, lng };
+                    }
+                }
                 // 1. Tratamento da Residência
                 if (id === 'RESIDENCIA_ME') {
                     const user = await prisma.usuario.findUnique({ where: { id: usuarioId } });
@@ -138,8 +149,9 @@ export class DiarioBordoController {
                 catch (e) { /* ignore */ }
                 return null;
             };
-            const coordsOrigem = await getCoords(origemId);
-            const coordsDestino = await getCoords(destinoId);
+            const coordsOrigem = await getCoords(origemId, origemManual);
+            const coordsDestino = await getCoords(destinoId, destinoManual);
+            console.log('[DiarioBordo] Coordenadas finais:', { coordsOrigem, coordsDestino });
             if (!coordsOrigem || !coordsDestino) {
                 // Se não há coordenadas, retorna 0 para permitir preenchimento manual no front
                 return res.status(200).json({ km: 0 });
