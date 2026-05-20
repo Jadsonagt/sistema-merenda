@@ -15,8 +15,12 @@ export async function calcularDistanciaOSRM(origem: Coordenada, destino: Coorden
     
     if (response.data && response.data.routes && response.data.routes.length > 0) {
       const distanciaMetros = response.data.routes[0].distance;
-      // Converte para quilômetros e arredonda para 2 casas decimais
-      const distanciaKm = parseFloat((distanciaMetros / 1000).toFixed(2));
+      const distanciaExataKm = distanciaMetros / 1000;
+      
+      console.log(`[OSRM] Distância exata calculada: ${distanciaMetros}m (${distanciaExataKm}km)`);
+      
+      // Mudança para Math.round para ser mais fiel ao hodômetro real, conforme solicitado
+      const distanciaKm = Math.round(distanciaExataKm);
       return distanciaKm;
     }
     
