@@ -429,7 +429,7 @@ export const CardapioList: React.FC = () => {
 
             {/* Semanas */}
             {weeks.map((week, weekIdx) => (
-              <div key={weekIdx} className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              <div key={weekIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 {week.map((slot, dayIdx) => {
                   if (!slot) {
                     return <div key={dayIdx} className="hidden lg:block min-h-[120px] bg-slate-50 rounded-md border border-slate-100" />;
