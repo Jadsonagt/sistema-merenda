@@ -45,7 +45,20 @@ const TIPOS_UNIDADE = [
 export const Escolas: React.FC = () => {
   const [escolas, setEscolas] = useState<Escola[]>([]);
   const [rotas, setRotas] = useState<Rota[]>([]);
-  const [filtroRota, setFiltroRota] = useState<string>('todas');
+  const [filtroRota, setFiltroRota] = useState<string>(() => {
+    const raw = localStorage.getItem('usuario');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.role?.toUpperCase() === 'SUPERVISORA' && parsed.rotaId) {
+          return parsed.rotaId;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return 'todas';
+  });
   const [loading, setLoading] = useState(false);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -130,6 +143,12 @@ export const Escolas: React.FC = () => {
     fetchRotas();
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (user?.role?.toUpperCase() === 'SUPERVISORA' && user.rotaId) {
+      setFiltroRota(user.rotaId);
+    }
+  }, [user]);
 
   const isAdmin = user?.role === 'ADMIN';
   const isNutri = user?.role === 'NUTRICIONISTA';
@@ -318,15 +337,23 @@ export const Escolas: React.FC = () => {
       <div className="flex flex-col-reverse sm:flex-row justify-between items-start sm:items-center gap-4 w-full mb-4 bg-white p-4 rounded-lg border shadow-sm">
         <div className="flex flex-col gap-1.5 min-w-[240px] w-full sm:w-auto">
           <Label className="text-xs font-bold text-slate-500 uppercase">Filtrar por Rota</Label>
-          <Select value={filtroRota} onValueChange={setFiltroRota}>
+          <Select 
+            value={filtroRota} 
+            onValueChange={setFiltroRota}
+            disabled={user?.role === 'SUPERVISORA' || user?.role?.toUpperCase() === 'SUPERVISORA'}
+          >
             <SelectTrigger className="h-9 bg-slate-50 border-slate-200">
               <SelectValue placeholder="Selecione uma rota" />
             </SelectTrigger>
             <SelectContent className="bg-white border shadow-xl">
-              <SelectItem value="todas">Todas as Rotas</SelectItem>
-              {rotas.map(r => (
-                <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
-              ))}
+              {!(user?.role === 'SUPERVISORA' || user?.role?.toUpperCase() === 'SUPERVISORA') && (
+                <SelectItem value="todas">Todas as Rotas</SelectItem>
+              )}
+              {rotas
+                .filter(r => !(user?.role === 'SUPERVISORA' || user?.role?.toUpperCase() === 'SUPERVISORA') || r.id === user.rotaId)
+                .map(r => (
+                  <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
