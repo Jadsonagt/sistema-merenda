@@ -207,17 +207,17 @@ export const Rotas: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-slate-200 flex gap-2">
+                      <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                         <Button 
                           variant="outline" 
-                          className="flex-1 bg-white border-slate-200 text-slate-600"
+                          className="w-full sm:w-auto bg-white border-slate-200 text-slate-600"
                           onClick={() => handleOpenEdit(rota)}
                         >
                           <Pencil className="h-4 w-4 mr-2" /> Editar
                         </Button>
                         <Button 
                           variant="outline" 
-                          className="flex-1 bg-white border-slate-200 text-red-600 hover:bg-red-50"
+                          className="w-full sm:w-auto bg-white border-slate-200 text-red-600 hover:bg-red-50"
                           onClick={() => setRotaParaExcluir(rota)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" /> Excluir
