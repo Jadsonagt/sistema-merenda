@@ -240,15 +240,15 @@ export const ItemsList: React.FC = () => {
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Catálogo de Itens</h1>
-          <p className="text-muted-foreground mt-1">Gerencie os ingredientes e insumos logísticos do sistema.</p>
-        </div>
-        <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all hover:shadow-lg active:scale-95">
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between flex-wrap">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3 w-full sm:w-auto order-1">
+          Catálogo de Itens
+        </h1>
+        <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition-all hover:shadow-lg active:scale-95 w-full sm:w-auto order-2 sm:order-3">
           <Plus className="mr-2 h-4 w-4" />
           Novo Item
         </Button>
+        <p className="text-muted-foreground w-full mt-1 sm:mt-0 order-3 sm:order-2">Gerencie os ingredientes e insumos logísticos do sistema.</p>
       </div>
 
       <Card className="shadow-md border-slate-200 bg-white overflow-hidden">

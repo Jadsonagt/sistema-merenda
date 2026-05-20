@@ -131,17 +131,15 @@ export const FichasList: React.FC = () => {
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <ClipboardList className="h-8 w-8 text-blue-600" />
-            Catálogo de Receitas
-          </h1>
-          <p className="text-muted-foreground mt-1">Catálogo de receitas. Os ingredientes são configurados por escola.</p>
-        </div>
-        <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white">
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between flex-wrap">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3 w-full sm:w-auto order-1">
+          <ClipboardList className="h-8 w-8 text-blue-600" />
+          Catálogo de Receitas
+        </h1>
+        <Button onClick={handleOpenCreate} className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto order-2 sm:order-3">
           <Plus className="mr-2 h-4 w-4" /> Nova Receita
         </Button>
+        <p className="text-muted-foreground w-full mt-1 sm:mt-0 order-3 sm:order-2">Catálogo de receitas. Os ingredientes são configurados por escola.</p>
       </div>
 
       <Card className="shadow-md border-slate-200 bg-white overflow-hidden">

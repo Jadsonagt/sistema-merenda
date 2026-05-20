@@ -118,17 +118,15 @@ export const Rotas: React.FC = () => {
 
   return (
     <div className="p-8 max-w-6xl mx-auto flex flex-col gap-6">
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Route className="h-8 w-8 text-teal-600" />
-            Rotas de Entrega
-          </h1>
-          <p className="text-muted-foreground mt-1">Gerencie as rotas logísticas de distribuição.</p>
-        </div>
-        <Button onClick={() => { setNewName(''); setIsCreateModalOpen(true); }} className="bg-teal-600 hover:bg-teal-700 text-white">
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between flex-wrap">
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-3 w-full sm:w-auto order-1">
+          <Route className="h-8 w-8 text-teal-600" />
+          Rotas de Entrega
+        </h1>
+        <Button onClick={() => { setNewName(''); setIsCreateModalOpen(true); }} className="bg-teal-600 hover:bg-teal-700 text-white w-full sm:w-auto order-2 sm:order-3">
           <Plus className="mr-2 h-4 w-4" /> Nova Rota
         </Button>
+        <p className="text-muted-foreground w-full mt-1 sm:mt-0 order-3 sm:order-2">Gerencie as rotas logísticas de distribuição.</p>
       </div>
 
       <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded-xl border border-slate-200 overflow-hidden">
