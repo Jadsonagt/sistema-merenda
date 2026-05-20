@@ -311,16 +311,16 @@ export const PreparosPanel: React.FC<Props> = ({ escolaId, escolaNome, open, onC
                 </TabsList>
               </Tabs>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-col-reverse sm:flex-row gap-2 mt-2 w-full sm:w-auto flex-shrink-0">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setIsCloneOpen(true)}
-                  className="h-9 border-slate-200 text-slate-600 font-bold gap-1.5"
+                  className="h-9 border-slate-200 text-slate-600 font-bold gap-1.5 w-full sm:w-auto"
                 >
                   <Copy className="h-3.5 w-3.5" /> Importar de outra Unidade
                 </Button>
-                <Button size="sm" onClick={handleOpenAdd} className="bg-blue-600 hover:bg-blue-700 text-white h-9 shadow-sm">
+                <Button size="sm" onClick={handleOpenAdd} className="bg-blue-600 hover:bg-blue-700 text-white h-9 shadow-sm w-full sm:w-auto">
                   <Plus className="mr-1.5 h-3.5 w-3.5" /> Adicionar Novo Preparo
                 </Button>
               </div>
