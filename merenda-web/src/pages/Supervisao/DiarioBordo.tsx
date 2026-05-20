@@ -172,10 +172,10 @@ const RoteiroForm: React.FC<{
             trechos.map((t, idx) => (
               <div key={t.id} className="relative flex flex-col gap-2">
                 <div className={`absolute -left-[19px] top-4 h-3 w-3 rounded-full border-2 border-white ring-2 ${idx === 0 ? 'ring-blue-500 bg-blue-500' : idx === trechos.length - 1 ? 'ring-emerald-500 bg-emerald-500' : 'ring-slate-300 bg-slate-300'}`} />
-                <div className="bg-slate-50 p-3 rounded-lg border flex items-center justify-between group">
-                  <div className="flex flex-col min-w-0 overflow-hidden">
+                <div className="bg-slate-50 p-3 rounded-lg border flex flex-row justify-between items-start gap-2 w-full group">
+                  <div className="flex flex-col flex-1 min-w-0">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parada {t.ordem}</span>
-                    <span className="font-bold text-slate-700 truncate" title={t.pontoNome}>{t.pontoNome}</span>
+                    <span className="font-bold text-slate-700 whitespace-normal break-words flex-1 min-w-0" title={t.pontoNome}>{t.pontoNome}</span>
                     {restricoesPorEscola[t.pontoId] && restricoesPorEscola[t.pontoId].length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {restricoesPorEscola[t.pontoId].map((restricao: any, i: number) => (
@@ -187,13 +187,13 @@ const RoteiroForm: React.FC<{
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 shrink-0">
                     {idx > 0 && (
                       <div className="flex items-center gap-1.5">
                         <Input
                           type="number"
                           step="0.1"
-                          className={`w-20 h-8 text-right font-mono font-bold text-xs ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
+                          className={`w-16 sm:w-20 h-8 text-right font-mono font-bold text-xs ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
                           value={t.km || 0}
                           onChange={e => onUpdateKm(idx, Number(e.target.value))}
                         />
