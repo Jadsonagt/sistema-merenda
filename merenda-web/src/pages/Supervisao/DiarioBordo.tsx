@@ -172,10 +172,10 @@ const RoteiroForm: React.FC<{
             trechos.map((t, idx) => (
               <div key={t.id} className="relative flex flex-col gap-2">
                 <div className={`absolute -left-[19px] top-4 h-3 w-3 rounded-full border-2 border-white ring-2 ${idx === 0 ? 'ring-blue-500 bg-blue-500' : idx === trechos.length - 1 ? 'ring-emerald-500 bg-emerald-500' : 'ring-slate-300 bg-slate-300'}`} />
-                <div className="bg-slate-50 p-3 rounded-lg border flex flex-row justify-between items-start gap-2 w-full group">
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parada {t.ordem}</span>
-                    <span className="font-bold text-slate-700 whitespace-normal break-words flex-1 min-w-0" title={t.pontoNome}>{t.pontoNome}</span>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 md:p-2 mb-3 md:mb-1 border border-slate-200 md:border-none rounded-lg md:rounded-none bg-white md:bg-transparent shadow-sm md:shadow-none w-full group">
+                  <div className="flex flex-col w-full md:flex-1 md:min-w-0">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Parada {t.ordem}</span>
+                    <h3 className="text-base font-bold text-slate-800 whitespace-normal break-words leading-tight" title={t.pontoNome}>{t.pontoNome}</h3>
                     {restricoesPorEscola[t.pontoId] && restricoesPorEscola[t.pontoId].length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {restricoesPorEscola[t.pontoId].map((restricao: any, i: number) => (
@@ -187,19 +187,19 @@ const RoteiroForm: React.FC<{
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {idx > 0 && (
-                      <div className="flex items-center gap-1.5">
+                  <div className="flex flex-row justify-between md:justify-end items-center gap-4 w-full md:w-auto mt-2 md:mt-0 pt-3 md:pt-0 border-t border-slate-100 md:border-none shrink-0">
+                    {idx > 0 ? (
+                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
+                        KM: 
                         <Input
                           type="number"
                           step="0.1"
-                          className={`w-16 sm:w-20 h-8 text-right font-mono font-bold text-xs ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
+                          className={`w-16 md:w-20 text-center text-base md:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
                           value={t.km || 0}
                           onChange={e => onUpdateKm(idx, Number(e.target.value))}
                         />
-                        <span className="text-[10px] text-slate-400 font-bold uppercase">km</span>
-                      </div>
-                    )}
+                      </label>
+                    ) : <div className="flex-1 md:hidden"></div>}
                     <Button
                       variant="ghost"
                       size="sm"
