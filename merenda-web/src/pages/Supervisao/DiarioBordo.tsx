@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import {
   Plus, Trash2, MapPin, Map as MapIcon,
   ChevronRight, FileSpreadsheet,
@@ -633,60 +634,48 @@ export const DiarioBordo: React.FC = () => {
         <Button variant="outline" size="sm" onClick={handleNextMonth}><ChevronRight className="h-4 w-4" /></Button>
       </div>
 
-      <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
-        <div className="flex flex-col gap-1 min-w-[1000px]">
-          <div className="grid grid-cols-5 gap-1">
-            {DIAS_SEMANA.map(dia => (
-              <div key={dia} className="bg-slate-800 text-white text-center text-sm font-semibold py-2.5 rounded-t-md">{dia}</div>
-            ))}
+      <div className="w-full pb-6">
+        {loading ? (
+          <div className="py-20 text-center text-slate-400">Carregando...</div>
+        ) : (
+          <div className="flex flex-col gap-3 w-full">
+            {weeks.flatMap(w => w).filter(Boolean).map((slot, idx) => {
+              if (!slot) return null;
+              const d = diariosByDate[slot.dateStr];
+              const isToday = slot.dateStr === todayStr;
+              const localDate = new Date(currentYear, currentMonth - 1, slot.day);
+              const dayOfWeekName = DIAS_SEMANA[localDate.getDay() - 1] || '';
+
+              return (
+                <button 
+                  key={idx}
+                  onClick={() => handleSelectDay(slot.dateStr)}
+                  className={`flex items-center justify-between w-full p-4 border rounded-xl shadow-sm transition-all text-left group ${isToday ? 'bg-orange-50 border-orange-300 hover:border-orange-500' : 'bg-white border-slate-200 hover:border-blue-500 hover:bg-slate-50'}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <CalendarDays className={`w-5 h-5 ${isToday ? 'text-orange-600' : 'text-blue-600'}`} /> 
+                    <span className="font-semibold text-slate-800 text-lg">
+                      {String(slot.day).padStart(2, '0')}/{String(currentMonth).padStart(2, '0')}/{currentYear}
+                      <span className="text-sm font-normal text-slate-500 ml-2">({dayOfWeekName})</span>
+                    </span>
+                    {isToday && <span className="ml-2 text-[9px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">HOJE</span>}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {d ? (
+                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold border-transparent">
+                        {(d.kmTotal || 0).toFixed(1)} KM
+                      </Badge>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-2 opacity-0 group-hover:opacity-100 transition-opacity">Preencher</span>
+                    )}
+                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                  </div>
+                </button>
+              );
+            })}
           </div>
-          {loading ? (
-            <div className="py-20 text-center text-slate-400">Carregando...</div>
-          ) : (
-            weeks.map((week, wIdx) => (
-              <div key={wIdx} className="grid grid-cols-5 gap-1">
-                {week.map((slot, sIdx) => {
-                  if (!slot) return <div key={sIdx} className="min-h-[110px] bg-slate-50 rounded-md border border-slate-100" />;
-                  const d = diariosByDate[slot.dateStr];
-                  const isToday = slot.dateStr === todayStr;
-                  return (
-                    <div key={sIdx} onClick={() => handleSelectDay(slot.dateStr)}
-                      className={`min-h-[110px] rounded-md border p-2 flex flex-col justify-between transition-all cursor-pointer group hover:shadow-md ${isToday ? 'bg-orange-50 border-orange-200' : d ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100'}`}
-                    >
-                      <div className="flex justify-between items-start">
-                        <span className={`text-xs font-bold ${isToday ? 'text-orange-600' : 'text-slate-500'}`}>{slot.day}</span>
-                        {isToday && <span className="text-[9px] bg-orange-600 text-white px-1 py-0.5 rounded">HOJE</span>}
-                      </div>
-                      {d ? (
-                        <div className="flex flex-col gap-1.5 h-full overflow-hidden">
-                          <div className="bg-blue-600 text-white rounded px-1.5 py-1 flex items-center justify-between shadow-sm shrink-0">
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Total</span>
-                            <span className="text-xs font-black font-mono">{(d?.kmTotal || 0).toFixed(1)} km</span>
-                          </div>
-
-                          <div className="text-[9px] text-center text-slate-500 font-medium py-0.5 bg-slate-100 rounded mb-1">
-                            Odômetro: {odometrosCalculados[slot.dateStr]?.inicio.toFixed(1) || 0} → {odometrosCalculados[slot.dateStr]?.fim.toFixed(1) || 0}
-                          </div>
-
-                          <div className="flex flex-col gap-1 overflow-y-auto pr-1 pb-1 scrollbar-thin scrollbar-thumb-slate-200">
-                            {(d?.trechos || []).map((t: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-1.5 text-[9px] text-slate-600 leading-tight min-w-0">
-                                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-blue-500' : idx === (d?.trechos?.length || 0) - 1 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                <span className="truncate font-medium flex-1" title={t.pontoNome}>{t.pontoNome}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <Plus className="h-4 w-4 text-slate-200 mx-auto" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))
-          )}
-        </div>
+        )}
       </div>
 
       <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
