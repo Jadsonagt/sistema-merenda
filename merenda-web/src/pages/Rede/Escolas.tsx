@@ -315,8 +315,8 @@ export const Escolas: React.FC = () => {
         )}
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-lg border shadow-sm">
-        <div className="flex flex-col gap-1.5 min-w-[240px]">
+      <div className="flex flex-col-reverse sm:flex-row justify-between items-start sm:items-center gap-4 w-full mb-4 bg-white p-4 rounded-lg border shadow-sm">
+        <div className="flex flex-col gap-1.5 min-w-[240px] w-full sm:w-auto">
           <Label className="text-xs font-bold text-slate-500 uppercase">Filtrar por Rota</Label>
           <Select value={filtroRota} onValueChange={setFiltroRota}>
             <SelectTrigger className="h-9 bg-slate-50 border-slate-200">
@@ -331,7 +331,7 @@ export const Escolas: React.FC = () => {
           </Select>
         </div>
         <div className="flex-1" />
-        <div className="text-right">
+        <div className="text-left sm:text-right">
           <span className="text-[10px] font-bold text-slate-400 uppercase block">Total Exibido</span>
           <span className="text-xl font-black text-blue-600">{escolasFiltradas.length}</span>
         </div>
