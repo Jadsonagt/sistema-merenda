@@ -432,15 +432,15 @@ export const ConsumosFixosList = () => {
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <DialogHeader className="bg-slate-900 text-white p-8">
-            <DialogTitle className="text-2xl font-bold">{editingConsumo ? 'Editar' : 'Novo'} Consumo Fixo</DialogTitle>
-            <DialogDescription className="text-slate-400 text-base mt-2">
+          <DialogHeader className="p-8">
+            <DialogTitle className="text-2xl font-bold text-slate-900">{editingConsumo ? 'Editar' : 'Novo'} Consumo Fixo</DialogTitle>
+            <DialogDescription className="text-slate-500 text-base mt-2">
               Defina a quantidade de saída automática por dia letivo para esta unidade.
             </DialogDescription>
           </DialogHeader>
 
           <div className="p-8 space-y-6 bg-white">
-            <div className="space-y-2.5 relative">
+            <div className="flex flex-col gap-4 py-4 md:py-6 relative">
               <Label className="text-sm font-bold text-slate-700 ml-1">Item do Catálogo</Label>
               <div className="relative group" ref={dropdownRef}>
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
@@ -454,7 +454,7 @@ export const ConsumosFixosList = () => {
                   }}
                   onFocus={() => setIsDropdownOpen(true)}
                   disabled={!!editingConsumo}
-                  className="h-12 pl-11 pr-10 bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500/20 font-medium"
+                  className="h-12 text-base pl-11 pr-10 bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
                 <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
 
@@ -558,7 +558,7 @@ export const ConsumosFixosList = () => {
             )}
           </div>
 
-          <DialogFooter className="bg-slate-50 p-6 flex flex-row gap-3 border-t border-slate-100 rounded-b-2xl">
+          <DialogFooter className="bg-slate-50 p-6 pt-4 mt-2 flex flex-row gap-3 border-t border-slate-100 rounded-b-2xl">
             <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="flex-1 font-bold text-slate-500 hover:bg-slate-200">
               Cancelar
             </Button>
