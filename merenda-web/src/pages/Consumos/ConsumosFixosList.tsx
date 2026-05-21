@@ -428,7 +428,7 @@ export const ConsumosFixosList = () => {
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent
-          className="sm:max-w-[480px] p-0 overflow-visible rounded-2xl border-none shadow-2xl"
+          className="bg-white text-slate-900 sm:max-w-[480px] p-0 overflow-visible rounded-2xl border-none shadow-2xl"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -439,7 +439,7 @@ export const ConsumosFixosList = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="p-8 space-y-6 bg-white">
+          <div className="p-8 space-y-6">
             <div className="flex flex-col gap-4 py-4 md:py-6 relative">
               <Label className="text-sm font-bold text-slate-700 ml-1">Item do Catálogo</Label>
               <div className="relative group" ref={dropdownRef}>
