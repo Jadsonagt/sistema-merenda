@@ -359,23 +359,7 @@ export const DiarioBordo: React.FC = () => {
     return map;
   }, [diarios]);
 
-  const odometrosCalculados = useMemo(() => {
-    let odoAtual = saldoInicialMes;
-    const mapa: Record<string, { inicio: number, fim: number }> = {};
-    
-    const diariosOrdenados = [...(diarios || [])].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-    
-    diariosOrdenados.forEach(d => {
-      if (!d.data) return;
-      const dateStr = typeof d.data === 'string' ? d.data.substring(0, 10) : new Date(d.data).toISOString().substring(0, 10);
-      const kmTotal = Number(d.kmTotal) || 0;
-      
-      mapa[dateStr] = { inicio: odoAtual, fim: odoAtual + kmTotal };
-      odoAtual += kmTotal;
-    });
-    
-    return mapa;
-  }, [diarios, saldoInicialMes]);
+
 
   const weeks = useMemo(() => getWeeksOfMonth(currentYear, currentMonth), [currentYear, currentMonth]);
   
