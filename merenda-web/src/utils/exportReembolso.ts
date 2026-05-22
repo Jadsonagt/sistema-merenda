@@ -24,14 +24,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
         const kmExato = Number(d.trechos[i].kmTrecho) || 0;
         const km = Number(kmExato.toFixed(1));
 
-        const isRTR = origem.toLowerCase().includes('residência') || destino.toLowerCase().includes('residência');
-        const sigla = isRTR ? 'R/T/R' : 'SUP';
-
-        const km66 = isRTR ? km : 0;
-        const km92 = !isRTR ? km : 0;
-
-        const valor66 = km66 * 0.66;
-        const valor92 = km92 * 0.92;
+        const valor = km * 1.00;
 
         const saida = odometroAtual;
         const retorno = odometroAtual + km;
@@ -40,11 +33,8 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
           'DATA': dataFormatada,
           'SAÍDA': saida.toString(),
           'RETORNO': retorno.toString(),
-          'sigla': sigla,
-          'Rodados KM 0,66': km66 > 0 ? km66.toString() : '0',
-          'Rodados KM 0,92': km92 > 0 ? km92.toString() : '0',
-          'R$ 0,66': valor66 > 0 ? `R$ ${valor66.toFixed(2).replace('.', ',')}` : '-',
-          'R$ 0,92': valor92 > 0 ? `R$ ${valor92.toFixed(2).replace('.', ',')}` : '-',
+          'KM RODADOS': km.toString(),
+          'VALOR A RECEBER': `R$ ${valor.toFixed(2).replace('.', ',')}`,
           'PED. R$': '',
           'ESTAC. R$': '',
           'OBSERVAÇÕES': `${origem}, ${destino}`
