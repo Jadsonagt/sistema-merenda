@@ -666,6 +666,23 @@ export const DiarioBordo: React.FC = () => {
                         </div>
                       </div>
 
+                      {/* Listagem de paradas (Resumo/Exibição de Escolas) */}
+                      {d && d.trechos && d.trechos.length > 0 && (
+                        <div className="flex flex-col gap-1 w-full text-left my-1 overflow-hidden shrink-0">
+                          {d.trechos.slice(0, 3).map((t: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-1.5 text-[10px] text-slate-500 leading-tight min-w-0">
+                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-blue-500' : idx === (d.trechos.length - 1) ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                              <span className="truncate font-medium flex-1" title={t.pontoNome}>{t.pontoNome}</span>
+                            </div>
+                          ))}
+                          {d.trechos.length > 3 && (
+                            <div className="text-[9px] font-bold text-slate-400 pl-3">
+                              + {d.trechos.length - 3} locais
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Conteúdo interno do diário (km, status, etc) */}
                       <div className="mt-auto w-full flex items-center justify-between pt-1.5 border-t border-slate-50">
                         {d ? (
