@@ -71,13 +71,29 @@ export const ConsumosFixosList = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importOriginEscolaId, setImportOriginEscolaId] = useState<string>("");
   const [isImporting, setIsImporting] = useState(false);
+  const [importSearchTerm, setImportSearchTerm] = useState("");
+  const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false);
+  const importDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isImportModalOpen) {
+      setImportSearchTerm("");
+      setImportOriginEscolaId("");
+      setIsImportDropdownOpen(false);
+    }
+  }, [isImportModalOpen]);
+
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const importDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (importDropdownRef.current && !importDropdownRef.current.contains(event.target as Node)) {
+        setIsImportDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -274,6 +290,14 @@ export const ConsumosFixosList = () => {
   );
   const filteredItems = availableItems.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const normalizeStr = (str: string) => 
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  const eligibleEscolas = escolas.filter(e => e.id !== selectedEscolaId);
+  const filteredImportEscolas = eligibleEscolas.filter(escola => 
+    normalizeStr(escola.name).includes(normalizeStr(importSearchTerm))
   );
 
   return (
@@ -654,21 +678,56 @@ export const ConsumosFixosList = () => {
               Selecione a unidade escolar de origem para copiar o padrão de consumo para a unidade atual. Itens já existentes não serão duplicados.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-6 space-y-4">
-            <div className="space-y-2">
+          <div className="p-6 space-y-4 relative" ref={importDropdownRef}>
+            <div className="space-y-2 relative">
               <Label className="text-sm font-bold text-slate-700 ml-1">Escola de Origem</Label>
-              <Select value={importOriginEscolaId} onValueChange={setImportOriginEscolaId}>
-                <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
-                  <SelectValue placeholder="Escolha a escola de origem..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {escolas.filter(e => e.id !== selectedEscolaId).map((escola) => (
-                    <SelectItem key={escola.id} value={escola.id}>
-                      {escola.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                <Input
+                  placeholder="Digite o nome da escola (ex: Antonia)..."
+                  value={importSearchTerm}
+                  onChange={(e) => {
+                    setImportSearchTerm(e.target.value);
+                    if (!isImportDropdownOpen) setIsImportDropdownOpen(true);
+                    
+                    // Clear selection if user types something that doesn't match
+                    const selected = escolas.find(esc => esc.id === importOriginEscolaId);
+                    if (selected && selected.name !== e.target.value) {
+                      setImportOriginEscolaId("");
+                    }
+                  }}
+                  onFocus={() => setIsImportDropdownOpen(true)}
+                  className="h-12 text-base pl-11 pr-10 bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500/20 font-medium"
+                />
+                <ChevronDown className={`absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 transition-transform duration-200 ${isImportDropdownOpen ? 'rotate-180' : ''}`} />
+                
+                {isImportDropdownOpen && (
+                  <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-full bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+                    {eligibleEscolas.length === 0 ? (
+                      <div className="p-4 text-center text-slate-500 text-sm italic font-medium">Nenhuma outra escola cadastrada.</div>
+                    ) : filteredImportEscolas.length === 0 ? (
+                      <div className="p-4 text-center text-slate-400 text-sm italic">Nenhuma escola encontrada.</div>
+                    ) : (
+                      filteredImportEscolas.map((escola) => (
+                        <div
+                          key={escola.id}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-none"
+                          onClick={() => {
+                            setImportOriginEscolaId(escola.id);
+                            setImportSearchTerm(escola.name);
+                            setIsImportDropdownOpen(false);
+                          }}
+                        >
+                          <span className={`text-sm font-medium ${importOriginEscolaId === escola.id ? 'text-blue-600' : 'text-slate-700'}`}>
+                            {escola.name}
+                          </span>
+                          {importOriginEscolaId === escola.id && <Check className="h-4 w-4 text-blue-600" />}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter className="bg-white p-6 border-t border-slate-100 rounded-b-2xl flex flex-col-reverse sm:flex-row w-full gap-3 mt-4">
