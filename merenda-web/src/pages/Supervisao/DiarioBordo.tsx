@@ -666,20 +666,31 @@ export const DiarioBordo: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Listagem de paradas (Resumo/Exibição de Escolas) */}
-                      {d && d.trechos && d.trechos.length > 0 && (
-                        <div className="flex flex-col gap-1 w-full text-left my-1 overflow-hidden shrink-0">
-                          {d.trechos.slice(0, 3).map((t: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-1.5 text-[10px] text-slate-500 leading-tight min-w-0">
-                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-blue-500' : idx === (d.trechos.length - 1) ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                              <span className="truncate font-medium flex-1" title={t.pontoNome}>{t.pontoNome}</span>
-                            </div>
-                          ))}
-                          {d.trechos.length > 3 && (
-                            <div className="text-[9px] font-bold text-slate-400 pl-3">
-                              + {d.trechos.length - 3} locais
+                      {d && (
+                        <div className="flex flex-col gap-1.5 h-full overflow-hidden w-full mt-2">
+                          {/* Totalizador de KM */}
+                          <div className="bg-blue-600 text-white rounded px-1.5 py-1 flex items-center justify-between shadow-sm shrink-0">
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Total</span>
+                            <span className="text-xs font-black font-mono">{(d.kmTotal || 0).toFixed(1)} km</span>
+                          </div>
+
+                          {/* Validação de Segurança do Odômetro para evitar quebra de Build */}
+                          {typeof odometrosCalculados !== 'undefined' && odometrosCalculados[slot.dateStr] && (
+                            <div className="text-[9px] text-center text-slate-500 font-medium py-0.5 bg-slate-100 rounded mb-1">
+                              Odômetro: {odometrosCalculados[slot.dateStr].inicio.toFixed(0)} → {odometrosCalculados[slot.dateStr].fim.toFixed(0)}
                             </div>
                           )}
+
+                          {/* Listagem das Escolas Visitadas */}
+                          <div className="flex flex-col gap-1 overflow-y-auto pr-1 pb-1 scrollbar-thin scrollbar-thumb-slate-200">
+                            {(d.trechos || []).map((t: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-1.5 text-[10px] text-slate-600 leading-tight min-w-0">
+                                {/* Indicador visual colorido */}
+                                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-blue-500' : idx === (d.trechos?.length || 0) - 1 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                <span className="truncate font-medium flex-1" title={t.pontoNome}>{t.pontoNome}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
 
