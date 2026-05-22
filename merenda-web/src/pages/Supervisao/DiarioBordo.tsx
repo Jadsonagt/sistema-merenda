@@ -28,7 +28,7 @@ const getCorRestricao = (nome: string) => {
   if (texto.includes('soja')) { matches++; lastMatch = 'soja'; }
   if (texto.includes('corante')) { matches++; lastMatch = 'corante'; }
 
-  if (matches > 1 || texto.includes(' e ') || texto.includes('/')) return 'bg-rose-100 text-rose-700 border-rose-200'; 
+  if (matches > 1 || texto.includes(' e ') || texto.includes('/')) return 'bg-rose-100 text-rose-700 border-rose-200';
 
   switch (lastMatch) {
     case 'lactose': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -43,6 +43,7 @@ const getCorRestricao = (nome: string) => {
 };
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const DIAS_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'];
 
 interface Trecho {
   id: string; // ID único para controle de renderização (React Key)
@@ -100,12 +101,10 @@ const getWeeksOfMonth = (year: number, month: number) => {
     const weekdayIndex = dow - 1;
 
     if (weekdayIndex === 0 && currentWeek.length > 0) {
-      // Preenche slots vazios no final da semana anterior
       while (currentWeek.length < 5) currentWeek.push(null);
       weeks.push(currentWeek);
       currentWeek = [];
     }
-    // Preenche slots vazios no início
     while (currentWeek.length < weekdayIndex) currentWeek.push(null);
     const m = String(month).padStart(2, '0');
     const d = String(day).padStart(2, '0');
@@ -173,10 +172,10 @@ const RoteiroForm: React.FC<{
             trechos.map((t, idx) => (
               <div key={t.id} className="relative flex flex-col gap-2">
                 <div className={`absolute -left-[19px] top-4 h-3 w-3 rounded-full border-2 border-white ring-2 ${idx === 0 ? 'ring-blue-500 bg-blue-500' : idx === trechos.length - 1 ? 'ring-emerald-500 bg-emerald-500' : 'ring-slate-300 bg-slate-300'}`} />
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 md:p-2 mb-3 md:mb-1 border border-slate-200 md:border-none rounded-lg md:rounded-none bg-white md:bg-transparent shadow-sm md:shadow-none w-full group">
-                  <div className="flex flex-col w-full md:flex-1 md:min-w-0">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Parada {t.ordem}</span>
-                    <h3 className="text-base font-bold text-slate-800 whitespace-normal break-words leading-tight" title={t.pontoNome}>{t.pontoNome}</h3>
+                <div className="bg-slate-50 p-3 rounded-lg border flex items-center justify-between group">
+                  <div className="flex flex-col min-w-0 overflow-hidden">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Parada {t.ordem}</span>
+                    <span className="font-bold text-slate-700 truncate" title={t.pontoNome}>{t.pontoNome}</span>
                     {restricoesPorEscola[t.pontoId] && restricoesPorEscola[t.pontoId].length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-1">
                         {restricoesPorEscola[t.pontoId].map((restricao: any, i: number) => (
@@ -188,19 +187,18 @@ const RoteiroForm: React.FC<{
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-row justify-between md:justify-end items-center gap-4 w-full md:w-auto mt-2 md:mt-0 pt-3 md:pt-0 border-t border-slate-100 md:border-none shrink-0">
-                    {idx > 0 ? (
-                      <label className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                        KM: 
+                  <div className="flex items-center gap-3">
+                    {idx > 0 && (
+                      <div className="flex items-center gap-1.5">
                         <Input
                           type="number"
-                          step="0.1"
-                          className={`w-16 md:w-20 text-center text-base md:text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
+                          className={`w-20 h-8 text-right font-mono font-bold text-xs ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
                           value={t.km || 0}
                           onChange={e => onUpdateKm(idx, Number(e.target.value))}
                         />
-                      </label>
-                    ) : <div className="flex-1 md:hidden"></div>}
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">km</span>
+                      </div>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
@@ -266,7 +264,7 @@ export const DiarioBordo: React.FC = () => {
 
   const validarEConfirmarKm = (novoValorStr: string) => {
     const novoValor = Number(novoValorStr);
-    
+
     // Se não mudou nada, apenas formata e sai
     if (novoValor === saldoInicialMes) {
       setKmInputTemp(saldoInicialMes > 0 ? saldoInicialMes.toString() : '');
@@ -278,7 +276,7 @@ export const DiarioBordo: React.FC = () => {
       const confirmou = window.confirm(
         `Atenção!\n\nVocê está alterando o KM inicial do mês de ${saldoInicialMes} para ${novoValor || 0}.\nIsso recalculará a escada de odômetro de todos os dias deste mês.\n\nDeseja realmente aplicar essa alteração?`
       );
-      
+
       if (!confirmou) {
         // Se cancelar, restaura o valor antigo no input
         setKmInputTemp(saldoInicialMes.toString());
@@ -337,7 +335,7 @@ export const DiarioBordo: React.FC = () => {
   useEffect(() => { fetchData(); }, [currentMonth, currentYear]);
 
   const restricoesPorEscola = useMemo(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mapa: Record<string, any[]> = {};
     demandasRede.forEach(d => {
       if (!mapa[d.escolaId]) mapa[d.escolaId] = [];
@@ -359,10 +357,26 @@ export const DiarioBordo: React.FC = () => {
     return map;
   }, [diarios]);
 
+  const odometrosCalculados = useMemo(() => {
+    let odoAtual = saldoInicialMes;
+    const mapa: Record<string, { inicio: number, fim: number }> = {};
 
+    const diariosOrdenados = [...(diarios || [])].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+
+    diariosOrdenados.forEach(d => {
+      if (!d.data) return;
+      const dateStr = typeof d.data === 'string' ? d.data.substring(0, 10) : new Date(d.data).toISOString().substring(0, 10);
+      const kmTotal = Number(d.kmTotal) || 0;
+
+      mapa[dateStr] = { inicio: odoAtual, fim: odoAtual + kmTotal };
+      odoAtual += kmTotal;
+    });
+
+    return mapa;
+  }, [diarios, saldoInicialMes]);
 
   const weeks = useMemo(() => getWeeksOfMonth(currentYear, currentMonth), [currentYear, currentMonth]);
-  
+
   const totalKmPeriodo = useMemo(() => {
     return (diarios || []).filter(d => {
       if (!d.data) return false;
@@ -395,11 +409,11 @@ export const DiarioBordo: React.FC = () => {
       })) || []);
     } else {
       if (userProfile?.latitudeResidencial) {
-        setTrechos([{ 
-          id: 'start-' + Date.now(), 
-          ordem: 1, 
-          pontoId: 'RESIDENCIA_ME', 
-          pontoNome: 'Minha Residência', 
+        setTrechos([{
+          id: 'start-' + Date.now(),
+          ordem: 1,
+          pontoId: 'RESIDENCIA_ME',
+          pontoNome: 'Minha Residência',
           km: 0,
           lat: userProfile.latitudeResidencial,
           lon: userProfile.longitudeResidencial
@@ -416,7 +430,7 @@ export const DiarioBordo: React.FC = () => {
     // Busca o nome na estrutura agrupada
     const todasEscolas = [...(escolas.minhaRota || []), ...(escolas.outrasRotas || [])];
     const escola = todasEscolas.find(e => e?.id === value);
-    
+
     if (escola) nome = escola.name;
     else {
       const ponto = Array.isArray(pontos) ? pontos.find(p => p?.id === value) : null;
@@ -432,8 +446,8 @@ export const DiarioBordo: React.FC = () => {
     let kmSugerido = 0;
     if (ultimo) {
       try {
-        const payload = { 
-          origemId: ultimo.pontoId, 
+        const payload = {
+          origemId: ultimo.pontoId,
           destinoId: id,
           origemManual: (ultimo.pontoId.startsWith('MANUAL_') || ultimo.pontoId === 'RESIDENCIA_ME') ? { lat: ultimo.lat, lon: ultimo.lon } : null,
           destinoManual: id.startsWith('MANUAL_') ? { lat: parseFloat(lat || '0'), lon: parseFloat(lon || '0') } : null
@@ -444,11 +458,11 @@ export const DiarioBordo: React.FC = () => {
         kmSugerido = res.data.km || 0;
       } catch (error) { console.warn('Falha OSRM:', error); }
     }
-    setTrechos([...trechos, { 
-      id: `t-${trechos.length}-${Date.now()}`, 
-      ordem: trechos.length + 1, 
-      pontoId: id, 
-      pontoNome: nome, 
+    setTrechos([...trechos, {
+      id: `t-${trechos.length}-${Date.now()}`,
+      ordem: trechos.length + 1,
+      pontoId: id,
+      pontoNome: nome,
       km: kmSugerido,
       lat: lat ? parseFloat(lat) : undefined,
       lon: lon ? parseFloat(lon) : undefined
@@ -462,10 +476,10 @@ export const DiarioBordo: React.FC = () => {
       const parts = text.split(',');
       setManualLat(parts[0].trim());
       setManualLon(parts[1].trim());
-      toast({ 
-        className: "bg-emerald-50 text-emerald-900 border-emerald-200", 
-        title: "Smart Paste", 
-        description: "Coordenadas extraídas." 
+      toast({
+        className: "bg-emerald-50 text-emerald-900 border-emerald-200",
+        title: "Smart Paste",
+        description: "Coordenadas extraídas."
       });
     }
   };
@@ -505,13 +519,13 @@ export const DiarioBordo: React.FC = () => {
     if (!confirm('Tem certeza que deseja excluir todo o roteiro deste dia? Esta ação não pode ser desfeita.')) return;
 
     setIsSubmitting(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     try {
       await api.delete(`/supervisao/diario-bordo?data=${selectedDate}`, getHeaders());
       toast({ title: "Sucesso", description: "Roteiro excluído com sucesso." });
       setSelectedDate(null);
       fetchData();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erro", description: error.response?.data?.error || "Erro ao excluir." });
     } finally {
@@ -524,7 +538,7 @@ export const DiarioBordo: React.FC = () => {
     setTimeout(() => {
       try {
         const diariosOrdenados = [...(diarios || [])].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-        
+
         let odoAcumulado = saldoInicialMes;
         const diariosFiltrados: Diario[] = [];
 
@@ -551,7 +565,7 @@ export const DiarioBordo: React.FC = () => {
   };
 
   const ultimoPontoId = (trechos?.length || 0) > 0 ? trechos[trechos.length - 1]?.pontoId : null;
-  
+
   // Filtros para o Select agrupado
   const escolasDisponiveis = useMemo(() => ({
     minhaRota: (escolas.minhaRota || []).filter(e => e.id !== ultimoPontoId),
@@ -575,15 +589,14 @@ export const DiarioBordo: React.FC = () => {
           <div className="flex flex-col justify-center gap-1 px-2 border-b lg:border-b-0 lg:border-r border-slate-100 pb-2 lg:pb-0">
             <span className="text-[10px] font-bold text-slate-400 uppercase">Km Inicial do Mês</span>
             <div className="flex gap-2 items-center">
-              <Input 
-                type="number" 
-                step="0.1"
-                className="h-8 text-xs font-bold text-slate-700 w-full lg:w-24 text-center" 
-                value={kmInputTemp} 
+              <Input
+                type="number"
+                className="h-8 text-xs font-bold text-slate-700 w-full lg:w-24 text-center"
+                value={kmInputTemp}
                 onChange={e => setKmInputTemp(e.target.value)}
                 onBlur={e => validarEConfirmarKm(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && validarEConfirmarKm(kmInputTemp)}
-                placeholder="Ex: 115000.5"
+                placeholder="Ex: 115000"
               />
             </div>
           </div>
@@ -618,100 +631,64 @@ export const DiarioBordo: React.FC = () => {
         <Button variant="outline" size="sm" onClick={handleNextMonth}><ChevronRight className="h-4 w-4" /></Button>
       </div>
 
-      <div className="w-full pb-6">
-        {loading ? (
-          <div className="py-20 text-center text-slate-400">Carregando...</div>
-        ) : (
-          <div className="flex flex-col gap-4 w-full min-w-0 lg:min-w-[1000px]">
-            {/* Cabeçalho da grade (5 colunas) */}
-            <div className="hidden lg:grid grid-cols-5 gap-4">
-              {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'].map((dia) => (
-                <div key={dia} className="bg-slate-800 text-white text-center text-sm font-semibold py-2.5 rounded-t-md">
-                  {dia}
-                </div>
-              ))}
-            </div>
-
-            {/* Renderização das Semanas */}
-            {weeks.map((week, weekIdx) => (
-              <div key={weekIdx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                {week.map((slot, dayIdx) => {
-                  // CARD VAZIO (Exatamente como no Cardápio)
-                  if (!slot) {
-                    return <div key={dayIdx} className="hidden lg:block min-h-[120px] bg-slate-50 rounded-md border border-slate-100" />;
-                  }
-
+      <div className="w-full overflow-x-auto pb-6 custom-scrollbar">
+        <div className="flex flex-col gap-1 min-w-[1000px]">
+          <div className="grid grid-cols-5 gap-1">
+            {DIAS_SEMANA.map(dia => (
+              <div key={dia} className="bg-slate-800 text-white text-center text-sm font-semibold py-2.5 rounded-t-md">{dia}</div>
+            ))}
+          </div>
+          {loading ? (
+            <div className="py-20 text-center text-slate-400">Carregando...</div>
+          ) : (
+            weeks.map((week, wIdx) => (
+              <div key={wIdx} className="grid grid-cols-5 gap-1">
+                {week.map((slot, sIdx) => {
+                  if (!slot) return <div key={sIdx} className="min-h-[110px] bg-slate-50 rounded-md border border-slate-100" />;
                   const d = diariosByDate[slot.dateStr];
                   const isToday = slot.dateStr === todayStr;
-
                   return (
-                    <button 
-                      key={dayIdx}
-                      onClick={() => handleSelectDay(slot.dateStr)}
-                      className={`min-h-[140px] rounded-xl border p-3 flex flex-col gap-2 transition-all cursor-pointer shadow-sm group relative ${
-                        isToday
-                          ? 'bg-orange-50 border-orange-300 ring-2 ring-orange-200'
-                          : 'bg-white border-slate-200 hover:border-blue-400 hover:shadow-md'
-                      }`}
+                    <div key={sIdx} onClick={() => handleSelectDay(slot.dateStr)}
+                      className={`min-h-[110px] rounded-md border p-2 flex flex-col justify-between transition-all cursor-pointer group hover:shadow-md ${isToday ? 'bg-orange-50 border-orange-200' : d ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100'}`}
                     >
-                      {/* Número do dia */}
-                      <div className="flex justify-between items-center h-5 w-full">
-                        <span className={`text-xl font-bold ${isToday ? 'text-orange-700' : 'text-slate-800'}`}>
-                          {slot.day} <span className="lg:hidden ml-1 text-slate-500 text-xs font-semibold">({['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'][dayIdx]})</span>
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {isToday && (
-                            <span className="text-[8px] font-bold bg-orange-600 text-white px-1.5 py-0.5 rounded">HOJE</span>
-                          )}
-                        </div>
+                      <div className="flex justify-between items-start">
+                        <span className={`text-xs font-bold ${isToday ? 'text-orange-600' : 'text-slate-500'}`}>{slot.day}</span>
+                        {isToday && <span className="text-[9px] bg-orange-600 text-white px-1 py-0.5 rounded">HOJE</span>}
                       </div>
-
-                      {d && (
-                        <div className="flex flex-col gap-1.5 h-full overflow-hidden w-full mt-2">
-                          {/* Totalizador de KM */}
+                      {d ? (
+                        <div className="flex flex-col gap-1.5 h-full overflow-hidden">
                           <div className="bg-blue-600 text-white rounded px-1.5 py-1 flex items-center justify-between shadow-sm shrink-0">
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Total</span>
-                            <span className="text-xs font-black font-mono">{(d.kmTotal || 0).toFixed(1)} km</span>
+                            <span className="text-xs font-black font-mono">{(d?.kmTotal || 0).toFixed(1)} km</span>
                           </div>
 
+                          <div className="text-[9px] text-center text-slate-500 font-medium py-0.5 bg-slate-100 rounded mb-1">
+                            Odômetro: {odometrosCalculados[slot.dateStr]?.inicio.toFixed(0) || 0} → {odometrosCalculados[slot.dateStr]?.fim.toFixed(0) || 0}
+                          </div>
 
-                          {/* Listagem das Escolas Visitadas */}
                           <div className="flex flex-col gap-1 overflow-y-auto pr-1 pb-1 scrollbar-thin scrollbar-thumb-slate-200">
-                            {(d.trechos || []).map((t: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-1.5 text-[10px] text-slate-600 leading-tight min-w-0">
-                                {/* Indicador visual colorido */}
-                                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-blue-500' : idx === (d.trechos?.length || 0) - 1 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                            {(d?.trechos || []).map((t: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-1.5 text-[9px] text-slate-600 leading-tight min-w-0">
+                                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${idx === 0 ? 'bg-blue-500' : idx === (d?.trechos?.length || 0) - 1 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                                 <span className="truncate font-medium flex-1" title={t.pontoNome}>{t.pontoNome}</span>
                               </div>
                             ))}
                           </div>
                         </div>
+                      ) : (
+                        <Plus className="h-4 w-4 text-slate-200 mx-auto" />
                       )}
-
-                      {/* Conteúdo interno do diário (km, status, etc) */}
-                      <div className="mt-auto w-full flex items-center justify-between pt-1.5 border-t border-slate-50">
-                        {d ? (
-                          <span className="text-[11px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50">
-                            {(d.kmTotal || 0).toFixed(1)} KM
-                          </span>
-                        ) : (
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
-                            Preencher
-                          </span>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-slate-400 lg:hidden" />
-                      </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
 
       <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[500px] bg-white p-0 overflow-hidden shadow-2xl border-none"
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -719,9 +696,9 @@ export const DiarioBordo: React.FC = () => {
         >
           {selectedDate && (
             <div className="flex flex-col h-full max-h-[90vh]">
-              <RoteiroForm 
-                date={selectedDate} trechos={trechos} isSubmitting={isSubmitting} 
-                onRemoveParada={handleRemoveParada} onUpdateKm={handleUpdateKm} 
+              <RoteiroForm
+                date={selectedDate} trechos={trechos} isSubmitting={isSubmitting}
+                onRemoveParada={handleRemoveParada} onUpdateKm={handleUpdateKm}
                 onDelete={handleDeleteDiario} hasExisting={!!diariosByDate[selectedDate]}
                 onClose={() => setSelectedDate(null)} onSubmit={handleSubmit}
                 restricoesPorEscola={restricoesPorEscola}
@@ -765,7 +742,7 @@ export const DiarioBordo: React.FC = () => {
       </Dialog>
 
       <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[450px] bg-white border-none p-0 overflow-hidden shadow-2xl rounded-2xl"
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -780,15 +757,15 @@ export const DiarioBordo: React.FC = () => {
               Adicione uma parada personalizada ao seu roteiro.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="p-6 space-y-4 bg-white">
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Nome do Local</Label>
-              <Input 
-                autoFocus 
-                placeholder="Ex: Posto, Cartório, Oficina..." 
-                value={manualName} 
-                onChange={e => setManualName(e.target.value)} 
+              <Input
+                autoFocus
+                placeholder="Ex: Posto, Cartório, Oficina..."
+                value={manualName}
+                onChange={e => setManualName(e.target.value)}
                 className="h-11 bg-slate-50 border-slate-200"
               />
             </div>
@@ -796,16 +773,16 @@ export const DiarioBordo: React.FC = () => {
             <div className="space-y-1.5">
               <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Endereço (Opcional)</Label>
               <div className="flex gap-2">
-                <Input 
-                  placeholder="Rua, Número..." 
-                  value={manualEndereco} 
-                  onChange={e => setManualEndereco(e.target.value)} 
+                <Input
+                  placeholder="Rua, Número..."
+                  value={manualEndereco}
+                  onChange={e => setManualEndereco(e.target.value)}
                   className="h-11 bg-slate-50 border-slate-200 flex-1"
                 />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
                   className="shrink-0 h-11 w-11 border-blue-200 text-blue-600 hover:bg-blue-50"
                   onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(manualEndereco || manualName)}`, '_blank')}
                   title="Pesquisar no Google Maps"
@@ -818,25 +795,25 @@ export const DiarioBordo: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Latitude</Label>
-                <Input 
-                  placeholder="-23.5..." 
-                  value={manualLat} 
-                  onChange={e => setManualLat(e.target.value)} 
+                <Input
+                  placeholder="-23.5..."
+                  value={manualLat}
+                  onChange={e => setManualLat(e.target.value)}
                   onPaste={handleManualSmartPaste}
                   className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Longitude</Label>
-                <Input 
-                  placeholder="-46.6..." 
-                  value={manualLon} 
-                  onChange={e => setManualLon(e.target.value)} 
+                <Input
+                  placeholder="-46.6..."
+                  value={manualLon}
+                  onChange={e => setManualLon(e.target.value)}
                   className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
                 />
               </div>
             </div>
-            
+
             <p className="text-[10px] text-amber-600 font-bold uppercase leading-tight bg-amber-50 p-2 rounded border border-amber-100">
               Dica: Cole as coordenadas completas na Latitude para preencher ambos.
             </p>
@@ -844,11 +821,11 @@ export const DiarioBordo: React.FC = () => {
 
           <DialogFooter className="p-6 bg-slate-50 border-t flex flex-row gap-3">
             <Button variant="ghost" onClick={() => setIsManualModalOpen(false)} className="flex-1 font-bold text-slate-500">Cancelar</Button>
-            <Button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold" 
+            <Button
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold"
               onClick={() => {
-                executeAddParada('MANUAL_'+Date.now(), manualName, manualLat, manualLon); 
-                setManualName(''); setManualEndereco(''); setManualLat(''); setManualLon(''); 
+                executeAddParada('MANUAL_' + Date.now(), manualName, manualLat, manualLon);
+                setManualName(''); setManualEndereco(''); setManualLat(''); setManualLon('');
                 setIsManualModalOpen(false);
               }}
               disabled={!manualName}
