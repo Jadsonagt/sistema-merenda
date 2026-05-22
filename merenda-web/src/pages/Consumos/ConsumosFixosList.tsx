@@ -267,6 +267,15 @@ export const ConsumosFixosList = () => {
     }
   };
 
+  const registeredItemIds = consumos.map(c => c.itemId);
+  const cartItemIds = cart.map(c => c.item.id);
+  const availableItems = items.filter(item => 
+    !registeredItemIds.includes(item.id) && !cartItemIds.includes(item.id)
+  );
+  const filteredItems = availableItems.filter(item => 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Header & Escola Selector */}
@@ -489,12 +498,12 @@ export const ConsumosFixosList = () => {
 
               {isDropdownOpen && !editingConsumo && (
                 <div className="absolute top-[calc(100%+4px)] left-0 z-50 w-full bg-white border border-slate-200 rounded-xl shadow-2xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-                  {items.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
-                    <div className="p-4 text-center text-slate-400 text-sm italic">Nenhum item encontrado.</div>
+                  {availableItems.length === 0 ? (
+                    <div className="p-4 text-center text-slate-500 text-sm italic font-medium">Todos os itens do catálogo já foram adicionados.</div>
+                  ) : filteredItems.length === 0 ? (
+                    <div className="p-4 text-center text-slate-400 text-sm italic">Nenhum item encontrado na pesquisa.</div>
                   ) : (
-                    items
-                      .filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map((item) => (
+                    filteredItems.map((item) => (
                         <div
                           key={item.id}
                           className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-none"
