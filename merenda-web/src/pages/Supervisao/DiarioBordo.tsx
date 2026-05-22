@@ -688,142 +688,152 @@ export const DiarioBordo: React.FC = () => {
       </div>
 
       <Dialog open={!!selectedDate} onOpenChange={open => !open && setSelectedDate(null)}>
-        <DialogContent className="sm:max-w-[500px] bg-white p-0 overflow-hidden shadow-2xl border-none">
-          {selectedDate && (
-            <div className="flex flex-col h-full max-h-[90vh]">
-              <RoteiroForm
-                date={selectedDate} trechos={trechos} isSubmitting={isSubmitting}
-                onRemoveParada={handleRemoveParada} onUpdateKm={handleUpdateKm}
-                onDelete={handleDeleteDiario} hasExisting={!!diariosByDate[selectedDate]}
-                onClose={() => setSelectedDate(null)} onSubmit={handleSubmit}
-                restricoesPorEscola={restricoesPorEscola}
-              />
-              <div className="p-6 pt-0 bg-slate-50 border-t">
-                <div className="pt-4">
-                  <Label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Novo Destino</Label>
-                  <Select onValueChange={handleAddParada}>
-                    <SelectTrigger className="w-full bg-blue-50 border-blue-200 text-blue-700 font-bold">
-                      <Plus className="mr-2 h-4 w-4" /> <SelectValue placeholder="Adicionar parada..." />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px] bg-white z-[100] shadow-2xl border">
-                      <SelectGroup>
-                        <SelectLabel>Atalhos</SelectLabel>
-                        <SelectItem value="RESIDENCIA_ME">🏠 Minha Residência</SelectItem>
-                        <SelectItem value="MANUAL">✍️ Destino Manual</SelectItem>
-                      </SelectGroup>
-                      {pontosDisponiveis.length > 0 && (
+        <DialogContent
+          className="sm:max-w-[500px] bg-white p-0 overflow-hidden shadow-2xl border-none"
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+            {selectedDate && (
+              <div className="flex flex-col h-full max-h-[90vh]">
+                <RoteiroForm
+                  date={selectedDate} trechos={trechos} isSubmitting={isSubmitting}
+                  onRemoveParada={handleRemoveParada} onUpdateKm={handleUpdateKm}
+                  onDelete={handleDeleteDiario} hasExisting={!!diariosByDate[selectedDate]}
+                  onClose={() => setSelectedDate(null)} onSubmit={handleSubmit}
+                  restricoesPorEscola={restricoesPorEscola}
+                />
+                <div className="p-6 pt-0 bg-slate-50 border-t">
+                  <div className="pt-4">
+                    <Label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Novo Destino</Label>
+                    <Select onValueChange={handleAddParada}>
+                      <SelectTrigger className="w-full bg-blue-50 border-blue-200 text-blue-700 font-bold">
+                        <Plus className="mr-2 h-4 w-4" /> <SelectValue placeholder="Adicionar parada..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px] bg-white z-[100] shadow-2xl border">
                         <SelectGroup>
-                          <SelectLabel>Pontos de Apoio</SelectLabel>
-                          {pontosDisponiveis.map(p => <SelectItem key={p.id} value={p.id}>🏢 {p.nome}</SelectItem>)}
+                          <SelectLabel>Atalhos</SelectLabel>
+                          <SelectItem value="RESIDENCIA_ME">🏠 Minha Residência</SelectItem>
+                          <SelectItem value="MANUAL">✍️ Destino Manual</SelectItem>
                         </SelectGroup>
-                      )}
-                      <SelectGroup>
-                        <SelectLabel>Minha Rota</SelectLabel>
-                        {escolasDisponiveis.minhaRota.map(e => <SelectItem key={e.id} value={e.id}>🏫 {e.name}</SelectItem>)}
-                      </SelectGroup>
-                      {escolasDisponiveis.outrasRotas.length > 0 && (
+                        {pontosDisponiveis.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel>Pontos de Apoio</SelectLabel>
+                            {pontosDisponiveis.map(p => <SelectItem key={p.id} value={p.id}>🏢 {p.nome}</SelectItem>)}
+                          </SelectGroup>
+                        )}
                         <SelectGroup>
-                          <SelectLabel>Outras Rotas</SelectLabel>
-                          {escolasDisponiveis.outrasRotas.map(e => <SelectItem key={e.id} value={e.id}>🌍 {e.name}</SelectItem>)}
+                          <SelectLabel>Minha Rota</SelectLabel>
+                          {escolasDisponiveis.minhaRota.map(e => <SelectItem key={e.id} value={e.id}>🏫 {e.name}</SelectItem>)}
                         </SelectGroup>
-                      )}
-                    </SelectContent>
-                  </Select>
+                        {escolasDisponiveis.outrasRotas.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel>Outras Rotas</SelectLabel>
+                            {escolasDisponiveis.outrasRotas.map(e => <SelectItem key={e.id} value={e.id}>🌍 {e.name}</SelectItem>)}
+                          </SelectGroup>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </DialogContent>
+            )}
+          </DialogContent>
       </Dialog>
 
       <Dialog open={isManualModalOpen} onOpenChange={setIsManualModalOpen}>
-        <DialogContent className="sm:max-w-[450px] bg-white border-none p-0 overflow-hidden shadow-2xl rounded-2xl">
-          <DialogHeader className="bg-slate-900 text-white p-6">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-blue-400" />
-              Destino Manual
-            </DialogTitle>
-            <DialogDescription className="text-slate-400">
-              Adicione uma parada personalizada ao seu roteiro.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          className="sm:max-w-[450px] bg-white border-none p-0 overflow-hidden shadow-2xl rounded-2xl"
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+            <DialogHeader className="bg-slate-900 text-white p-6">
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-400" />
+                Destino Manual
+              </DialogTitle>
+              <DialogDescription className="text-slate-400">
+                Adicione uma parada personalizada ao seu roteiro.
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="p-6 space-y-4 bg-white">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Nome do Local</Label>
-              <Input
-                autoFocus
-                placeholder="Ex: Posto, Cartório, Oficina..."
-                value={manualName}
-                onChange={e => setManualName(e.target.value)}
-                className="h-11 bg-slate-50 border-slate-200"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Endereço (Opcional)</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Rua, Número..."
-                  value={manualEndereco}
-                  onChange={e => setManualEndereco(e.target.value)}
-                  className="h-11 bg-slate-50 border-slate-200 flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0 h-11 w-11 border-blue-200 text-blue-600 hover:bg-blue-50"
-                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(manualEndereco || manualName)}`, '_blank')}
-                  title="Pesquisar no Google Maps"
-                >
-                  <MapIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="p-6 space-y-4 bg-white">
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Latitude</Label>
+                <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Nome do Local</Label>
                 <Input
-                  placeholder="-23.5..."
-                  value={manualLat}
-                  onChange={e => setManualLat(e.target.value)}
-                  onPaste={handleManualSmartPaste}
-                  className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
+                  autoFocus
+                  placeholder="Ex: Posto, Cartório, Oficina..."
+                  value={manualName}
+                  onChange={e => setManualName(e.target.value)}
+                  className="h-11 bg-slate-50 border-slate-200"
                 />
               </div>
+
               <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Longitude</Label>
-                <Input
-                  placeholder="-46.6..."
-                  value={manualLon}
-                  onChange={e => setManualLon(e.target.value)}
-                  className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
-                />
+                <Label className="text-xs font-bold uppercase text-slate-500 ml-1">Endereço (Opcional)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Rua, Número..."
+                    value={manualEndereco}
+                    onChange={e => setManualEndereco(e.target.value)}
+                    className="h-11 bg-slate-50 border-slate-200 flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 h-11 w-11 border-blue-200 text-blue-600 hover:bg-blue-50"
+                    onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(manualEndereco || manualName)}`, '_blank')}
+                    title="Pesquisar no Google Maps"
+                  >
+                    <MapIcon className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Latitude</Label>
+                  <Input
+                    placeholder="-23.5..."
+                    value={manualLat}
+                    onChange={e => setManualLat(e.target.value)}
+                    onPaste={handleManualSmartPaste}
+                    className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-slate-400 ml-1">Longitude</Label>
+                  <Input
+                    placeholder="-46.6..."
+                    value={manualLon}
+                    onChange={e => setManualLon(e.target.value)}
+                    className="h-11 bg-slate-50 border-slate-200 font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[10px] text-amber-600 font-bold uppercase leading-tight bg-amber-50 p-2 rounded border border-amber-100">
+                Dica: Cole as coordenadas completas na Latitude para preencher ambos.
+              </p>
             </div>
 
-            <p className="text-[10px] text-amber-600 font-bold uppercase leading-tight bg-amber-50 p-2 rounded border border-amber-100">
-              Dica: Cole as coordenadas completas na Latitude para preencher ambos.
-            </p>
-          </div>
-
-          <DialogFooter className="p-6 bg-slate-50 border-t flex flex-row gap-3">
-            <Button variant="ghost" onClick={() => setIsManualModalOpen(false)} className="flex-1 font-bold text-slate-500">Cancelar</Button>
-            <Button
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold"
-              onClick={() => {
-                executeAddParada('MANUAL_' + Date.now(), manualName, manualLat, manualLon);
-                setManualName(''); setManualEndereco(''); setManualLat(''); setManualLon('');
-                setIsManualModalOpen(false);
-              }}
-              disabled={!manualName}
-            >
-              Adicionar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
+            <DialogFooter className="p-6 bg-slate-50 border-t flex flex-row gap-3">
+              <Button variant="ghost" onClick={() => setIsManualModalOpen(false)} className="flex-1 font-bold text-slate-500">Cancelar</Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                onClick={() => {
+                  executeAddParada('MANUAL_' + Date.now(), manualName, manualLat, manualLon);
+                  setManualName(''); setManualEndereco(''); setManualLat(''); setManualLon('');
+                  setIsManualModalOpen(false);
+                }}
+                disabled={!manualName}
+              >
+                Adicionar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
       </Dialog>
 
       <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
