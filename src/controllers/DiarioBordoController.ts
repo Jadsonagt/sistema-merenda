@@ -7,7 +7,7 @@ import { calcularDistanciaHaversine } from '../utils/geo.js';
 export class DiarioBordoController {
   async salvar(req: Request, res: Response) {
     try {
-      const { data, kmTotal, trechos } = req.body;
+      const { data, kmTotal, trechos, isFeriado } = req.body;
       const usuarioId = req.user?.id;
 
       if (!usuarioId) {
@@ -16,6 +16,10 @@ export class DiarioBordoController {
 
       const novaData = new Date(data);
       novaData.setUTCHours(12, 0, 0, 0);
+
+      const feriado = Boolean(isFeriado);
+      const kmTotalFinal = feriado ? 0 : Number(kmTotal);
+      const trechosFinal = feriado ? [] : (trechos || []);
 
       const diario = await prisma.$transaction(async (tx) => {
         const diarioExistente = await tx.diarioBordo.findUnique({
@@ -29,10 +33,11 @@ export class DiarioBordoController {
         const d = await tx.diarioBordo.upsert({
           where: { usuarioId_data: { usuarioId, data: novaData } },
           update: {
-            kmTotal: Number(kmTotal),
+            kmTotal: kmTotalFinal,
             odometroInicial: Number(req.body.odometroInicial) || 0,
+            isFeriado: feriado,
             trechos: {
-              create: trechos.map((t: any, index: number) => ({
+              create: trechosFinal.map((t: any, index: number) => ({
                 ordem: index + 1,
                 pontoNome: t.pontoNome,
                 kmTrecho: Number(t.kmTrecho)
@@ -42,10 +47,11 @@ export class DiarioBordoController {
           create: {
             usuarioId,
             data: novaData,
-            kmTotal: Number(kmTotal),
+            kmTotal: kmTotalFinal,
             odometroInicial: Number(req.body.odometroInicial) || 0,
+            isFeriado: feriado,
             trechos: {
-              create: trechos.map((t: any, index: number) => ({
+              create: trechosFinal.map((t: any, index: number) => ({
                 ordem: index + 1,
                 pontoNome: t.pontoNome,
                 kmTrecho: Number(t.kmTrecho)

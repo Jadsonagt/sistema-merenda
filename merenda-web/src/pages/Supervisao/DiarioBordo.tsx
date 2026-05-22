@@ -72,6 +72,7 @@ interface Diario {
   data: string;
   kmTotal: number;
   odometroInicial?: number;
+  isFeriado?: boolean;
   trechos: {
     ordem: number;
     pontoNome: string;
@@ -533,6 +534,27 @@ export const DiarioBordo: React.FC = () => {
     }
   };
 
+  const handleMarcarFeriado = async () => {
+    if (!selectedDate) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        data: selectedDate,
+        kmTotal: 0,
+        isFeriado: true,
+        trechos: []
+      };
+      await api.post('/supervisao/diario-bordo', payload, getHeaders());
+      toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Feriado registrado com sucesso." });
+      setSelectedDate(null);
+      fetchData();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erro", description: "Falha ao registrar feriado." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleExport = () => {
     setIsExporting(true);
     setTimeout(() => {
@@ -647,15 +669,21 @@ export const DiarioBordo: React.FC = () => {
                   if (!slot) return <div key={sIdx} className="min-h-[110px] bg-slate-50 rounded-md border border-slate-100" />;
                   const d = diariosByDate[slot.dateStr];
                   const isToday = slot.dateStr === todayStr;
+                  const isFeriado = d?.isFeriado;
                   return (
                     <div key={sIdx} onClick={() => handleSelectDay(slot.dateStr)}
-                      className={`min-h-[110px] rounded-md border p-2 flex flex-col justify-between transition-all cursor-pointer group hover:shadow-md ${isToday ? 'bg-orange-50 border-orange-200' : d ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100'}`}
+                      className={`min-h-[110px] rounded-md border p-2 flex flex-col justify-between transition-all cursor-pointer group hover:shadow-md ${isToday ? 'bg-orange-50 border-orange-200' : isFeriado ? 'bg-rose-50 border-rose-200' : d ? 'bg-blue-50 border-blue-100' : 'bg-white border-slate-100'}`}
                     >
                       <div className="flex justify-between items-start">
-                        <span className={`text-xs font-bold ${isToday ? 'text-orange-600' : 'text-slate-500'}`}>{slot.day}</span>
+                        <span className={`text-xs font-bold ${isToday ? 'text-orange-600' : isFeriado ? 'text-rose-600' : 'text-slate-500'}`}>{slot.day}</span>
                         {isToday && <span className="text-[9px] bg-orange-600 text-white px-1 py-0.5 rounded">HOJE</span>}
+                        {isFeriado && <span className="text-[9px] bg-rose-600 text-white px-1 py-0.5 rounded">FERIADO</span>}
                       </div>
-                      {d ? (
+                      {isFeriado ? (
+                        <div className="flex flex-col items-center justify-center h-full my-auto">
+                          <span className="text-[14px] font-black text-rose-600">🌴 Feriado</span>
+                        </div>
+                      ) : d ? (
                         <div className="flex flex-col gap-1.5 h-full overflow-hidden">
                           <div className="bg-blue-600 text-white rounded px-1.5 py-1 flex items-center justify-between shadow-sm shrink-0">
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Total</span>
@@ -704,36 +732,49 @@ export const DiarioBordo: React.FC = () => {
                   restricoesPorEscola={restricoesPorEscola}
                 />
                 <div className="p-6 pt-0 bg-slate-50 border-t">
-                  <div className="pt-4">
-                    <Label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Novo Destino</Label>
-                    <Select onValueChange={handleAddParada}>
-                      <SelectTrigger className="w-full bg-blue-50 border-blue-200 text-blue-700 font-bold">
-                        <Plus className="mr-2 h-4 w-4" /> <SelectValue placeholder="Adicionar parada..." />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px] bg-white z-[100] shadow-2xl border">
-                        <SelectGroup>
-                          <SelectLabel>Atalhos</SelectLabel>
-                          <SelectItem value="RESIDENCIA_ME">🏠 Minha Residência</SelectItem>
-                          <SelectItem value="MANUAL">✍️ Destino Manual</SelectItem>
-                        </SelectGroup>
-                        {pontosDisponiveis.length > 0 && (
+                  <div className="pt-4 flex flex-col gap-3">
+                    <div>
+                      <Label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Novo Destino</Label>
+                      <Select onValueChange={handleAddParada}>
+                        <SelectTrigger className="w-full bg-blue-50 border-blue-200 text-blue-700 font-bold">
+                          <Plus className="mr-2 h-4 w-4" /> <SelectValue placeholder="Adicionar parada..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px] bg-white z-[100] shadow-2xl border">
                           <SelectGroup>
-                            <SelectLabel>Pontos de Apoio</SelectLabel>
-                            {pontosDisponiveis.map(p => <SelectItem key={p.id} value={p.id}>🏢 {p.nome}</SelectItem>)}
+                            <SelectLabel>Atalhos</SelectLabel>
+                            <SelectItem value="RESIDENCIA_ME">🏠 Minha Residência</SelectItem>
+                            <SelectItem value="MANUAL">✍️ Destino Manual</SelectItem>
                           </SelectGroup>
-                        )}
-                        <SelectGroup>
-                          <SelectLabel>Minha Rota</SelectLabel>
-                          {escolasDisponiveis.minhaRota.map(e => <SelectItem key={e.id} value={e.id}>🏫 {e.name}</SelectItem>)}
-                        </SelectGroup>
-                        {escolasDisponiveis.outrasRotas.length > 0 && (
+                          {pontosDisponiveis.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>Pontos de Apoio</SelectLabel>
+                              {pontosDisponiveis.map(p => <SelectItem key={p.id} value={p.id}>🏢 {p.nome}</SelectItem>)}
+                            </SelectGroup>
+                          )}
                           <SelectGroup>
-                            <SelectLabel>Outras Rotas</SelectLabel>
-                            {escolasDisponiveis.outrasRotas.map(e => <SelectItem key={e.id} value={e.id}>🌍 {e.name}</SelectItem>)}
+                            <SelectLabel>Minha Rota</SelectLabel>
+                            {escolasDisponiveis.minhaRota.map(e => <SelectItem key={e.id} value={e.id}>🏫 {e.name}</SelectItem>)}
                           </SelectGroup>
-                        )}
-                      </SelectContent>
-                    </Select>
+                          {escolasDisponiveis.outrasRotas.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>Outras Rotas</SelectLabel>
+                              {escolasDisponiveis.outrasRotas.map(e => <SelectItem key={e.id} value={e.id}>🌍 {e.name}</SelectItem>)}
+                            </SelectGroup>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!diariosByDate[selectedDate] && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="w-full border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold flex items-center justify-center gap-1.5"
+                        onClick={handleMarcarFeriado}
+                        disabled={isSubmitting}
+                      >
+                        🌴 Marcar como Feriado
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

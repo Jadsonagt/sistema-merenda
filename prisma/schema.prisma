@@ -307,6 +307,7 @@ model DiarioBordo {
   data            DateTime
   kmTotal         Float
   odometroInicial Float?         @default(0)
+  isFeriado       Boolean        @default(false)
   trechos         TrechoViagem[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
