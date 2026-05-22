@@ -85,7 +85,6 @@ export const ConsumosFixosList = () => {
 
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const importDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
