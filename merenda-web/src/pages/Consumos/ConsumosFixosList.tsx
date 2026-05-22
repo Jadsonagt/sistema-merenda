@@ -270,9 +270,9 @@ export const ConsumosFixosList = () => {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
             <ClipboardList className="h-8 w-8 text-blue-600" />
-            Consumo Fixo Diário
+            Consumo Fixo
           </h1>
-          <p className="text-slate-500 mt-1 text-sm font-medium">Itens consumidos diariamente independente do cardápio.</p>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Itens com saída automática (diária ou semanal) independente do cardápio.</p>
         </div>
 
         <div className="w-full md:w-80 space-y-2">
@@ -345,7 +345,8 @@ export const ConsumosFixosList = () => {
                       <TableRow>
                         <TableHead className="font-bold text-slate-700 px-8 py-4 h-14">Nome do Item</TableHead>
                         <TableHead className="font-bold text-slate-700 text-center h-14">Unidade</TableHead>
-                        <TableHead className="font-bold text-slate-700 text-center h-14">Quantidade Diária</TableHead>
+                        <TableHead className="font-bold text-slate-700 text-center h-14">Quantidade</TableHead>
+                        <TableHead className="font-bold text-slate-700 text-center h-14">Frequência</TableHead>
                         <TableHead className="font-bold text-slate-700 text-right px-8 h-14">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -362,6 +363,15 @@ export const ConsumosFixosList = () => {
                             <div className="inline-flex items-center justify-center px-4 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-black border border-blue-100 shadow-sm">
                               {c.quantidadeDiaria}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                              c.frequencia === 'SEMANAL' 
+                                ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                                : 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                            }`}>
+                              {c.frequencia || 'DIARIO'}
+                            </span>
                           </TableCell>
                           <TableCell className="text-right px-8 py-5">
                             <div className="flex justify-end gap-3">
@@ -401,9 +411,19 @@ export const ConsumosFixosList = () => {
                             Unidade: {c.item.baseUnit || 'un'}
                           </span>
                         </div>
-                        <div className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-lg font-black shadow-md">
+                        <div className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-lg font-black shadow-md flex flex-col items-center justify-center">
                           {c.quantidadeDiaria}
                         </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          c.frequencia === 'SEMANAL' 
+                            ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                            : 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                        }`}>
+                          {c.frequencia || 'DIARIO'}
+                        </span>
                       </div>
 
                       <div className="pt-4 border-t border-slate-200 flex gap-2">
