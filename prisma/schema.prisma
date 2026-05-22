@@ -14,6 +14,11 @@ datasource db {
 // ENUMS
 // -------------------------------------------------------------
 
+enum TipoFrequencia {
+  DIARIO
+  SEMANAL
+}
+
 enum TipoRefeicao {
   DESJEJUM
   MERENDA
@@ -236,6 +241,7 @@ model ConsumoFixo {
   itemId           String
   item             Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
   quantidadeDiaria Float
+  frequencia       TipoFrequencia @default(DIARIO)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
