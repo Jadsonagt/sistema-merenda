@@ -644,17 +644,17 @@ export const ConsumosFixosList = () => {
 
       {/* Modal de Importação */}
       <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-        <DialogContent className="sm:max-w-[420px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden">
-          <DialogHeader className="bg-slate-900 text-white p-6 pb-8">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <Copy className="h-5 w-5 text-blue-400" />
+        <DialogContent className="sm:max-w-[420px] rounded-2xl border-none shadow-2xl p-0 overflow-hidden bg-white text-slate-900">
+          <DialogHeader className="bg-white text-slate-900 p-6 pb-4 border-b border-slate-100">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900">
+              <Copy className="h-5 w-5 text-blue-600" />
               Importar Consumo
             </DialogTitle>
-            <DialogDescription className="text-slate-400 mt-2">
+            <DialogDescription className="text-slate-500 text-sm mt-2">
               Selecione a unidade escolar de origem para copiar o padrão de consumo para a unidade atual. Itens já existentes não serão duplicados.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-6 space-y-4 bg-white -mt-4 rounded-t-2xl relative z-10">
+          <div className="p-6 space-y-4">
             <div className="space-y-2">
               <Label className="text-sm font-bold text-slate-700 ml-1">Escola de Origem</Label>
               <Select value={importOriginEscolaId} onValueChange={setImportOriginEscolaId}>
@@ -671,11 +671,11 @@ export const ConsumosFixosList = () => {
               </Select>
             </div>
           </div>
-          <DialogFooter className="bg-slate-50 p-6 flex flex-row gap-3 border-t border-slate-100 rounded-b-2xl">
-            <Button variant="ghost" onClick={() => setIsImportModalOpen(false)} disabled={isImporting} className="flex-1 font-bold text-slate-500 hover:bg-slate-200">
+          <DialogFooter className="bg-white p-6 border-t border-slate-100 rounded-b-2xl flex flex-col-reverse sm:flex-row w-full gap-3 mt-4">
+            <Button variant="ghost" onClick={() => setIsImportModalOpen(false)} disabled={isImporting} className="w-full sm:w-auto flex-1 font-bold text-slate-500 hover:bg-slate-200">
               Cancelar
             </Button>
-            <Button onClick={handleImport} disabled={isImporting || !importOriginEscolaId} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-lg shadow-blue-500/20">
+            <Button onClick={handleImport} disabled={isImporting || !importOriginEscolaId} className="w-full sm:w-auto flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 shadow-lg shadow-blue-500/20">
               {isImporting ? 'Importando...' : 'Confirmar Importação'}
             </Button>
           </DialogFooter>
