@@ -97,22 +97,26 @@ const getWeeksOfMonth = (year: number, month: number) => {
 
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month - 1, day);
-    const dow = date.getDay();
-    if (dow === 0 || dow === 6) continue;
-    const weekdayIndex = dow - 1;
+    const dow = date.getDay(); // 0=Sun, 1=Mon ... 6=Sat
 
-    if (weekdayIndex === 0 && currentWeek.length > 0) {
-      while (currentWeek.length < 5) currentWeek.push(null);
+    if (dow === 0 && currentWeek.length > 0) {
       weeks.push(currentWeek);
       currentWeek = [];
     }
-    while (currentWeek.length < weekdayIndex) currentWeek.push(null);
+
+    if (currentWeek.length === 0) {
+      for (let i = 0; i < dow; i++) {
+        currentWeek.push(null);
+      }
+    }
+
     const m = String(month).padStart(2, '0');
     const d = String(day).padStart(2, '0');
     currentWeek.push({ day, dateStr: `${year}-${m}-${d}` });
   }
+
   if (currentWeek.length > 0) {
-    while (currentWeek.length < 5) currentWeek.push(null);
+    while (currentWeek.length < 7) currentWeek.push(null);
     weeks.push(currentWeek);
   }
   return weeks;
@@ -622,50 +626,94 @@ export const DiarioBordo: React.FC = () => {
         {loading ? (
           <div className="py-20 text-center text-slate-400">Carregando...</div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3 w-full">
-            {weeks.flatMap(w => w).filter(Boolean).map((slot, idx) => {
-              if (!slot) return null;
-              const d = diariosByDate[slot.dateStr];
-              const isToday = slot.dateStr === todayStr;
-              const localDate = new Date(currentYear, currentMonth - 1, slot.day);
-              const dayOfWeekName = DIAS_SEMANA[localDate.getDay() - 1] || '';
+          <div className="flex flex-col w-full">
+            {/* Cabeçalho Dias da Semana - visível apenas no PC (lg) */}
+            <div className="hidden lg:grid grid-cols-7 gap-3 mb-3 text-center font-bold text-slate-700 bg-slate-100 p-2 rounded-lg">
+              <div>Domingo</div><div>Segunda</div><div>Terça</div><div>Quarta</div>
+              <div>Quinta</div><div>Sexta</div><div>Sábado</div>
+            </div>
 
-              return (
-                <button 
-                  key={idx}
-                  onClick={() => handleSelectDay(slot.dateStr)}
-                  className={`flex flex-row md:flex-col items-center md:items-start justify-between w-full p-4 md:p-3 border rounded-xl md:rounded-lg shadow-sm transition-all text-left group md:min-h-[120px] md:aspect-square relative ${isToday ? 'bg-orange-50 border-orange-300 hover:border-orange-500' : 'bg-white border-slate-200 hover:border-blue-500 hover:bg-slate-50'}`}
-                >
-                  <div className="flex flex-row md:flex-col items-center md:items-start gap-2 md:gap-1 w-full">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className={`w-5 h-5 shrink-0 ${isToday ? 'text-orange-600' : 'text-blue-600'}`} /> 
-                      <span className="font-semibold text-slate-800 text-lg md:text-xl">
-                        {String(slot.day).padStart(2, '0')}
-                        <span className="text-sm font-normal text-slate-500 md:hidden ml-1">/{String(currentMonth).padStart(2, '0')}</span>
-                      </span>
-                      {isToday && <span className="md:absolute md:top-2 md:right-2 text-[9px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">HOJE</span>}
+            {/* Container Pai (A Grade) */}
+            <div className="flex flex-col lg:grid lg:grid-cols-7 gap-3 w-full">
+              {weeks.flatMap(w => w).map((slot, idx) => {
+                if (!slot) {
+                  return <div key={idx} className="hidden lg:block min-h-[140px] bg-slate-50/50 rounded-lg border border-slate-100/50" />;
+                }
+
+                const localDate = new Date(currentYear, currentMonth - 1, slot.day);
+                const dow = localDate.getDay();
+
+                // Se for fim de semana, renderiza célula cinza sutil no desktop, oculta no mobile
+                if (dow === 0 || dow === 6) {
+                  return (
+                    <div 
+                      key={idx} 
+                      className="hidden lg:flex flex-col justify-between min-h-[140px] bg-slate-50/30 rounded-lg border border-slate-100/30 p-3 opacity-40 select-none"
+                    >
+                      <span className="text-sm font-semibold text-slate-400">{slot.day}</span>
+                      <span className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Fim de Semana</span>
                     </div>
-                    <span className="hidden md:inline text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      {dayOfWeekName}
-                    </span>
-                    <span className="inline md:hidden text-sm font-normal text-slate-500 ml-1">
-                      ({dayOfWeekName})
-                    </span>
-                  </div>
+                  );
+                }
 
-                  <div className="flex items-center justify-end md:justify-between w-full md:w-full gap-2 mt-0 md:mt-auto pt-0 md:pt-1">
-                    {d ? (
-                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold border-transparent text-xs py-0.5 px-2">
-                        {(d.kmTotal || 0).toFixed(1)} KM
-                      </Badge>
-                    ) : (
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider md:opacity-100 opacity-0 group-hover:opacity-100 transition-opacity">Preencher</span>
-                    )}
-                    <ChevronRight className="w-5 h-5 text-slate-400 md:hidden" />
-                  </div>
-                </button>
-              );
-            })}
+                const d = diariosByDate[slot.dateStr];
+                const isToday = slot.dateStr === todayStr;
+                const dayOfWeekName = DIAS_SEMANA[dow - 1] || '';
+
+                return (
+                  <button 
+                    key={idx}
+                    onClick={() => handleSelectDay(slot.dateStr)}
+                    className={`flex lg:flex-col items-center lg:items-start justify-between lg:justify-start w-full p-4 lg:p-3 border rounded-xl lg:rounded-lg shadow-sm lg:shadow-none transition-all text-left relative lg:min-h-[140px] lg:border-slate-100 ${isToday ? 'bg-orange-50 border-orange-300' : 'bg-white border-slate-200 lg:border-slate-100 hover:border-blue-500 lg:hover:bg-slate-50/50'}`}
+                  >
+                    {/* Layout Mobile (Agenda View) */}
+                    <div className="flex items-center gap-3 lg:hidden">
+                      <CalendarDays className={`w-5 h-5 ${isToday ? 'text-orange-600' : 'text-blue-600'}`} /> 
+                      <span className="font-semibold text-slate-800 text-lg">
+                        {String(slot.day).padStart(2, '0')}/{String(currentMonth).padStart(2, '0')}/{currentYear}
+                        <span className="text-sm font-normal text-slate-500 ml-2">({dayOfWeekName})</span>
+                      </span>
+                      {isToday && <span className="ml-2 text-[9px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">HOJE</span>}
+                    </div>
+
+                    {/* Layout Desktop (Minimal Clean View like Cardapio) */}
+                    <div className="hidden lg:flex justify-between items-center w-full mb-2">
+                      <span className={`text-2xl font-black ${isToday ? 'text-orange-700' : 'text-slate-800'}`}>
+                        {slot.day}
+                      </span>
+                      {isToday && (
+                        <span className="text-[8px] font-bold bg-orange-600 text-white px-1.5 py-0.5 rounded uppercase tracking-wider scale-90">HOJE</span>
+                      )}
+                    </div>
+
+                    {/* Mobile Actions/Badges */}
+                    <div className="flex items-center gap-2 lg:hidden">
+                      {d ? (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold border-transparent">
+                          {(d.kmTotal || 0).toFixed(1)} KM
+                        </Badge>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-2 opacity-0 group-hover:opacity-100 transition-opacity">Preencher</span>
+                      )}
+                      <ChevronRight className="w-5 h-5 text-slate-400" />
+                    </div>
+
+                    {/* Desktop Actions/Badges (Sutil na base do card) */}
+                    <div className="hidden lg:flex mt-auto w-full items-center justify-between pt-1.5 border-t border-slate-50">
+                      {d ? (
+                        <span className="text-[11px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50">
+                          {(d.kmTotal || 0).toFixed(1)} KM
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                          Preencher
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
