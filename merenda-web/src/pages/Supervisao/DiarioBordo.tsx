@@ -622,7 +622,7 @@ export const DiarioBordo: React.FC = () => {
         {loading ? (
           <div className="py-20 text-center text-slate-400">Carregando...</div>
         ) : (
-          <div className="flex flex-col gap-3 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3 w-full">
             {weeks.flatMap(w => w).filter(Boolean).map((slot, idx) => {
               if (!slot) return null;
               const d = diariosByDate[slot.dateStr];
@@ -634,26 +634,34 @@ export const DiarioBordo: React.FC = () => {
                 <button 
                   key={idx}
                   onClick={() => handleSelectDay(slot.dateStr)}
-                  className={`flex items-center justify-between w-full p-4 border rounded-xl shadow-sm transition-all text-left group ${isToday ? 'bg-orange-50 border-orange-300 hover:border-orange-500' : 'bg-white border-slate-200 hover:border-blue-500 hover:bg-slate-50'}`}
+                  className={`flex flex-row md:flex-col items-center md:items-start justify-between w-full p-4 md:p-3 border rounded-xl md:rounded-lg shadow-sm transition-all text-left group md:min-h-[120px] md:aspect-square relative ${isToday ? 'bg-orange-50 border-orange-300 hover:border-orange-500' : 'bg-white border-slate-200 hover:border-blue-500 hover:bg-slate-50'}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <CalendarDays className={`w-5 h-5 ${isToday ? 'text-orange-600' : 'text-blue-600'}`} /> 
-                    <span className="font-semibold text-slate-800 text-lg">
-                      {String(slot.day).padStart(2, '0')}/{String(currentMonth).padStart(2, '0')}/{currentYear}
-                      <span className="text-sm font-normal text-slate-500 ml-2">({dayOfWeekName})</span>
+                  <div className="flex flex-row md:flex-col items-center md:items-start gap-2 md:gap-1 w-full">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className={`w-5 h-5 shrink-0 ${isToday ? 'text-orange-600' : 'text-blue-600'}`} /> 
+                      <span className="font-semibold text-slate-800 text-lg md:text-xl">
+                        {String(slot.day).padStart(2, '0')}
+                        <span className="text-sm font-normal text-slate-500 md:hidden ml-1">/{String(currentMonth).padStart(2, '0')}</span>
+                      </span>
+                      {isToday && <span className="md:absolute md:top-2 md:right-2 text-[9px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">HOJE</span>}
+                    </div>
+                    <span className="hidden md:inline text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {dayOfWeekName}
                     </span>
-                    {isToday && <span className="ml-2 text-[9px] bg-orange-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">HOJE</span>}
+                    <span className="inline md:hidden text-sm font-normal text-slate-500 ml-1">
+                      ({dayOfWeekName})
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end md:justify-between w-full md:w-full gap-2 mt-0 md:mt-auto pt-0 md:pt-1">
                     {d ? (
-                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold border-transparent">
+                      <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 font-bold border-transparent text-xs py-0.5 px-2">
                         {(d.kmTotal || 0).toFixed(1)} KM
                       </Badge>
                     ) : (
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-2 opacity-0 group-hover:opacity-100 transition-opacity">Preencher</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider md:opacity-100 opacity-0 group-hover:opacity-100 transition-opacity">Preencher</span>
                     )}
-                    <ChevronRight className="w-5 h-5 text-slate-400" />
+                    <ChevronRight className="w-5 h-5 text-slate-400 md:hidden" />
                   </div>
                 </button>
               );
