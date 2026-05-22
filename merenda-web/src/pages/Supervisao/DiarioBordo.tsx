@@ -534,26 +534,7 @@ export const DiarioBordo: React.FC = () => {
     }
   };
 
-  const handleMarcarFeriado = async () => {
-    if (!selectedDate) return;
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        data: selectedDate,
-        kmTotal: 0,
-        isFeriado: true,
-        trechos: []
-      };
-      await api.post('/supervisao/diario-bordo', payload, getHeaders());
-      toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Feriado registrado com sucesso." });
-      setSelectedDate(null);
-      fetchData();
-    } catch (error) {
-      toast({ variant: "destructive", title: "Erro", description: "Falha ao registrar feriado." });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+
 
   const handleExport = () => {
     setIsExporting(true);
@@ -734,7 +715,24 @@ export const DiarioBordo: React.FC = () => {
                 <div className="p-6 pt-0 bg-slate-50 border-t">
                   <div className="pt-4 flex flex-col gap-3">
                     <div>
-                      <Label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Novo Destino</Label>
+                      <div className="flex justify-between items-end mb-2">
+                        <Label className="text-[10px] font-bold text-slate-500 uppercase block">Novo Destino</Label>
+                        <Button 
+                          type="button"
+                          size="sm" 
+                          variant="outline" 
+                          className="h-6 text-[10px] border-orange-200 text-orange-600 hover:bg-orange-50 bg-white" 
+                          onClick={async () => {
+                            try {
+                              await api.post('/supervisao/diario-bordo', { data: selectedDate, kmTotal: 0, trechos: [], isFeriado: true }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                              setSelectedDate(null);
+                              window.location.reload(); // Força o refresh para limpar o cache e atualizar a grade
+                            } catch (e) { console.error(e); }
+                          }}
+                        >
+                          🌴 Marcar Feriado
+                        </Button>
+                      </div>
                       <Select onValueChange={handleAddParada}>
                         <SelectTrigger className="w-full bg-blue-50 border-blue-200 text-blue-700 font-bold">
                           <Plus className="mr-2 h-4 w-4" /> <SelectValue placeholder="Adicionar parada..." />
@@ -763,18 +761,6 @@ export const DiarioBordo: React.FC = () => {
                           )}
                         </SelectContent>
                       </Select>
-                    </div>
-                    {!diariosByDate[selectedDate] && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        className="w-full border border-rose-200 text-rose-700 hover:bg-rose-50 font-bold flex items-center justify-center gap-1.5"
-                        onClick={handleMarcarFeriado}
-                        disabled={isSubmitting}
-                      >
-                        🌴 Marcar como Feriado
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
