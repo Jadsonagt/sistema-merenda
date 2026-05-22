@@ -466,18 +466,20 @@ export const ConsumosFixosList = () => {
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent
-          className="bg-white text-slate-900 sm:max-w-[480px] p-0 overflow-visible rounded-2xl border-none shadow-2xl"
+          className="bg-white text-slate-900 sm:max-w-[480px] border-none shadow-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden sm:p-6 sm:max-h-fit rounded-2xl"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <DialogHeader className="p-8">
-            <DialogTitle className="text-2xl font-bold text-slate-900">{editingConsumo ? 'Editar' : 'Novo'} Consumo Fixo</DialogTitle>
-            <DialogDescription className="text-slate-500 text-base mt-2">
-              Defina a quantidade de saída automática por dia letivo para esta unidade.
-            </DialogDescription>
-          </DialogHeader>
+          <div className="p-4 sm:p-0 border-b border-slate-100 sm:border-none shrink-0">
+            <DialogHeader className="p-0">
+              <DialogTitle className="text-2xl font-bold text-slate-900">{editingConsumo ? 'Editar' : 'Novo'} Consumo Fixo</DialogTitle>
+              <DialogDescription className="text-slate-500 text-base mt-2">
+                Defina a quantidade de saída automática por dia letivo para esta unidade.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-          <div className="p-8 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-0 space-y-6">
             <div className="flex flex-col gap-4 py-4 md:py-6 relative">
               <Label className="text-sm font-bold text-slate-700 ml-1">Item do Catálogo</Label>
               <div className="relative group" ref={dropdownRef}>
@@ -580,50 +582,52 @@ export const ConsumosFixosList = () => {
                        {cart.length} {cart.length === 1 ? 'item' : 'itens'}
                      </span>
                    </div>
-                   <ul className="divide-y divide-slate-50 max-h-48 overflow-y-auto">
-                   {cart.map(c => (
-                     <li key={c.item.id} className="p-3 flex justify-between items-center hover:bg-slate-50 transition-colors">
-                       <div className="flex flex-col flex-1">
-                         <span className="text-sm font-bold text-slate-800 leading-tight">{c.item.name}</span>
-                         <span className="text-[10px] font-medium text-slate-400 mt-0.5 uppercase tracking-wider">
-                           Unidade: {c.item.baseUnit}
-                         </span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <Select value={c.frequencia} onValueChange={(val) => handleUpdateCartFrequencia(c.item.id, val as 'DIARIO' | 'SEMANAL')}>
-                           <SelectTrigger className="h-9 w-28 text-xs font-semibold focus:ring-blue-500/20">
-                             <SelectValue />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem value="DIARIO" className="text-xs">Diário</SelectItem>
-                             <SelectItem value="SEMANAL" className="text-xs">Semanal</SelectItem>
-                           </SelectContent>
-                         </Select>
-                         <Input 
-                           type="number"
-                           step="0.01"
-                           value={c.quantidade}
-                           onChange={(e) => handleUpdateCartQuantity(c.item.id, e.target.value)}
-                           className="w-20 h-9 font-bold text-center text-sm focus:ring-blue-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                         />
-                         <Button 
-                           variant="ghost" 
-                           size="sm" 
-                           onClick={() => handleRemoveFromCart(c.item.id)} 
-                           className="text-slate-400 hover:text-red-600 hover:bg-red-50 h-9 w-9 p-0 shrink-0"
-                         >
-                           <Trash2 className="h-4 w-4"/>
-                         </Button>
-                       </div>
-                     </li>
-                   ))}
-                   </ul>
+                    <div className="max-h-48 overflow-y-auto pr-1 space-y-2 p-1">
+                    {cart.map(c => (
+                      <div key={c.item.id} className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 mb-2 border border-slate-200 rounded-lg bg-slate-50 w-full animate-in fade-in duration-200">
+                        <span className="font-semibold text-slate-800 text-sm w-full md:flex-1 break-words">
+                          {c.item.name}
+                          <span className="text-[10px] font-medium text-slate-400 block uppercase tracking-wider mt-0.5">
+                            Unidade: {c.item.baseUnit}
+                          </span>
+                        </span>
+                        
+                        <div className="flex flex-row items-center justify-between w-full md:w-auto gap-4 border-t border-slate-200 md:border-none pt-2 md:pt-0">
+                          <Select value={c.frequencia} onValueChange={(val) => handleUpdateCartFrequencia(c.item.id, val as 'DIARIO' | 'SEMANAL')}>
+                            <SelectTrigger className="h-9 w-24 text-xs font-semibold focus:ring-blue-500/20 bg-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="DIARIO" className="text-xs">Diário</SelectItem>
+                              <SelectItem value="SEMANAL" className="text-xs">Semanal</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            type="number"
+                            step="0.01"
+                            value={c.quantidade}
+                            onChange={(e) => handleUpdateCartQuantity(c.item.id, e.target.value)}
+                            className="w-20 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            placeholder="Qtd"
+                          />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleRemoveFromCart(c.item.id)} 
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 h-10 w-10 shrink-0"
+                          >
+                            <Trash2 className="h-4 w-4"/>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    </div>
                  </div>
                </div>
             )}
           </div>
 
-          <DialogFooter className="bg-slate-50 p-6 pt-4 mt-2 flex flex-row gap-3 border-t border-slate-100 rounded-b-2xl">
+          <DialogFooter className="p-4 sm:p-0 border-t border-slate-100 bg-white sticky bottom-0 z-10 shrink-0 flex flex-col-reverse sm:flex-row gap-3 w-full rounded-b-2xl">
             <Button variant="ghost" onClick={() => setIsModalOpen(false)} className="flex-1 font-bold text-slate-500 hover:bg-slate-200">
               Cancelar
             </Button>
