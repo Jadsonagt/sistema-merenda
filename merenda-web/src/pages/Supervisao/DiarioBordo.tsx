@@ -674,12 +674,6 @@ export const DiarioBordo: React.FC = () => {
                             <span className="text-xs font-black font-mono">{(d.kmTotal || 0).toFixed(1)} km</span>
                           </div>
 
-                          {/* Validação de Segurança do Odômetro para evitar quebra de Build */}
-                          {typeof odometrosCalculados !== 'undefined' && odometrosCalculados[slot.dateStr] && (
-                            <div className="text-[9px] text-center text-slate-500 font-medium py-0.5 bg-slate-100 rounded mb-1">
-                              Odômetro: {odometrosCalculados[slot.dateStr].inicio.toFixed(0)} → {odometrosCalculados[slot.dateStr].fim.toFixed(0)}
-                            </div>
-                          )}
 
                           {/* Listagem das Escolas Visitadas */}
                           <div className="flex flex-col gap-1 overflow-y-auto pr-1 pb-1 scrollbar-thin scrollbar-thumb-slate-200">
