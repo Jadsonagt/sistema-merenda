@@ -64,7 +64,7 @@ export const ConsumosFixosList = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [quantidade, setQuantidade] = useState<string>("");
   const [frequencia, setFrequencia] = useState<'DIARIO' | 'SEMANAL'>('DIARIO');
-  const [cart, setCart] = useState<{ item: Item; quantidade: string }[]>([]);
+  const [cart, setCart] = useState<{ item: Item; quantidade: string; frequencia: 'DIARIO' | 'SEMANAL' }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Import State
@@ -157,7 +157,7 @@ export const ConsumosFixosList = () => {
       if (cart.some(c => c.item.id === item.id)) {
          toast({ variant: "destructive", title: "Atenção", description: "Item já adicionado à lista." });
       } else {
-         setCart([...cart, { item, quantidade: "1" }]);
+         setCart([...cart, { item, quantidade: "1", frequencia: 'DIARIO' }]);
          setSearchTerm("");
       }
     }
@@ -166,6 +166,10 @@ export const ConsumosFixosList = () => {
 
   const handleUpdateCartQuantity = (itemId: string, newQuantidade: string) => {
     setCart(cart.map(c => c.item.id === itemId ? { ...c, quantidade: newQuantidade } : c));
+  };
+
+  const handleUpdateCartFrequencia = (itemId: string, newFrequencia: 'DIARIO' | 'SEMANAL') => {
+    setCart(cart.map(c => c.item.id === itemId ? { ...c, frequencia: newFrequencia } : c));
   };
 
   const handleRemoveFromCart = (itemId: string) => {
@@ -202,7 +206,7 @@ export const ConsumosFixosList = () => {
         await Promise.all(cart.map(c => saveConsumoFixo(selectedEscolaId, {
           itemId: c.item.id,
           quantidadeDiaria: parseFloat(c.quantidade),
-          frequencia
+          frequencia: c.frequencia
         })));
         toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: `${cart.length} itens adicionados com sucesso.` });
         setIsModalOpen(false);
@@ -557,20 +561,6 @@ export const ConsumosFixosList = () => {
             {/* Lista Temporária (Carrinho) */}
             {!editingConsumo && cart.length > 0 && (
                <div className="pt-6 mt-6 border-t border-slate-100 space-y-6">
-                 {/* Frequencia Global para Lote */}
-                 <div className="space-y-2.5">
-                   <Label className="text-sm font-bold text-slate-700 ml-1">Frequência de Saída (Lote)</Label>
-                   <Select value={frequencia} onValueChange={(val) => setFrequencia(val as 'DIARIO' | 'SEMANAL')}>
-                     <SelectTrigger className="h-12 bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500/20 font-medium max-w-xs">
-                       <SelectValue placeholder="Selecione a frequência" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="DIARIO">Diário</SelectItem>
-                       <SelectItem value="SEMANAL">Semanal</SelectItem>
-                     </SelectContent>
-                   </Select>
-                 </div>
-
                  <div className="border border-blue-100 rounded-xl overflow-hidden bg-white shadow-sm ring-4 ring-blue-50/50 transition-all animate-in fade-in slide-in-from-top-4">
                    <div className="bg-blue-50/80 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
                      <span className="font-bold text-blue-900 text-sm flex items-center gap-2">
@@ -591,12 +581,21 @@ export const ConsumosFixosList = () => {
                          </span>
                        </div>
                        <div className="flex items-center gap-2">
+                         <Select value={c.frequencia} onValueChange={(val) => handleUpdateCartFrequencia(c.item.id, val as 'DIARIO' | 'SEMANAL')}>
+                           <SelectTrigger className="h-9 w-28 text-xs font-semibold focus:ring-blue-500/20">
+                             <SelectValue />
+                           </SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="DIARIO" className="text-xs">Diário</SelectItem>
+                             <SelectItem value="SEMANAL" className="text-xs">Semanal</SelectItem>
+                           </SelectContent>
+                         </Select>
                          <Input 
                            type="number"
                            step="0.01"
                            value={c.quantidade}
                            onChange={(e) => handleUpdateCartQuantity(c.item.id, e.target.value)}
-                           className="w-24 h-9 font-bold text-center text-sm focus:ring-blue-500/20"
+                           className="w-20 h-9 font-bold text-center text-sm focus:ring-blue-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                          />
                          <Button 
                            variant="ghost" 

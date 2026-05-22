@@ -23,7 +23,7 @@ export class ConsumoFixoController {
   async salvar(req: Request, res: Response) {
     try {
       const { escolaId } = req.params;
-      const { itemId, quantidadeDiaria } = req.body;
+      const { itemId, quantidadeDiaria, frequencia } = req.body;
 
       if (!itemId || quantidadeDiaria === undefined) {
         return res.status(400).json({ error: 'Faltam campos: itemId, quantidadeDiaria' });
@@ -50,11 +50,13 @@ export class ConsumoFixoController {
         },
         update: {
           quantidadeDiaria: valorQuantidade,
+          frequencia: frequencia || 'DIARIO',
         },
         create: {
           escolaId: String(escolaId),
           itemId: String(itemId),
           quantidadeDiaria: valorQuantidade,
+          frequencia: frequencia || 'DIARIO',
         },
         include: { item: true }
       });
