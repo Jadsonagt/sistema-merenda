@@ -63,6 +63,7 @@ export const ConsumosFixosList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [quantidade, setQuantidade] = useState<string>("");
+  const [frequencia, setFrequencia] = useState<'DIARIO' | 'SEMANAL'>('DIARIO');
   const [cart, setCart] = useState<{ item: Item; quantidade: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -135,11 +136,13 @@ export const ConsumosFixosList = () => {
       setSelectedItemId(consumo.itemId);
       setSearchTerm(consumo.item.name);
       setQuantidade(String(consumo.quantidadeDiaria));
+      setFrequencia(consumo.frequencia || 'DIARIO');
     } else {
       setEditingConsumo(null);
       setSelectedItemId("");
       setSearchTerm("");
       setQuantidade("");
+      setFrequencia('DIARIO');
     }
     setCart([]);
     setIsDropdownOpen(false);
@@ -179,7 +182,8 @@ export const ConsumosFixosList = () => {
       try {
         await saveConsumoFixo(selectedEscolaId, {
           itemId: selectedItemId,
-          quantidadeDiaria: parseFloat(quantidade)
+          quantidadeDiaria: parseFloat(quantidade),
+          frequencia
         });
         toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Consumo atualizado com sucesso." });
         setIsModalOpen(false);
@@ -197,7 +201,8 @@ export const ConsumosFixosList = () => {
       try {
         await Promise.all(cart.map(c => saveConsumoFixo(selectedEscolaId, {
           itemId: c.item.id,
-          quantidadeDiaria: parseFloat(c.quantidade)
+          quantidadeDiaria: parseFloat(c.quantidade),
+          frequencia
         })));
         toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: `${cart.length} itens adicionados com sucesso.` });
         setIsModalOpen(false);
@@ -489,31 +494,63 @@ export const ConsumosFixosList = () => {
             </div>
 
             {editingConsumo && (
-              <div className="space-y-2.5">
-                <Label className="text-sm font-bold text-slate-700 ml-1">
-                  Quantidade Diária {selectedItemId ? `(${items.find(i => i.id === selectedItemId)?.baseUnit})` : '(na Unidade Base)'}
-                </Label>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Ex: 0.5"
-                    value={quantidade}
-                    onChange={(e) => setQuantidade(e.target.value)}
-                    className="h-12 bg-slate-50 border-slate-200 pl-4 pr-12 font-bold text-lg focus:ring-2 focus:ring-blue-500/20"
-                  />
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs uppercase tracking-widest">
-                    {selectedItemId ? items.find(i => i.id === selectedItemId)?.baseUnit : 'unid.'}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-bold text-slate-700 ml-1">
+                    Quantidade {selectedItemId ? `(${items.find(i => i.id === selectedItemId)?.baseUnit})` : '(na Unidade Base)'}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Ex: 0.5"
+                      value={quantidade}
+                      onChange={(e) => setQuantidade(e.target.value)}
+                      className="h-12 bg-slate-50 border-slate-200 pl-4 pr-12 font-bold text-lg focus:ring-2 focus:ring-blue-500/20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                      {selectedItemId ? items.find(i => i.id === selectedItemId)?.baseUnit : 'unid.'}
+                    </div>
                   </div>
+                  <p className="text-[11px] text-slate-400 italic ml-1">* Use ponto para decimais (ex: 1.5)</p>
                 </div>
-                <p className="text-[11px] text-slate-400 italic ml-1">* Use ponto para decimais (ex: 1.5)</p>
+                
+                <div className="space-y-2.5">
+                  <Label className="text-sm font-bold text-slate-700 ml-1">
+                    Frequência de Saída
+                  </Label>
+                  <Select value={frequencia} onValueChange={(val) => setFrequencia(val as 'DIARIO' | 'SEMANAL')}>
+                    <SelectTrigger className="h-12 bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500/20 font-medium">
+                      <SelectValue placeholder="Selecione a frequência" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DIARIO">Diário</SelectItem>
+                      <SelectItem value="SEMANAL">Semanal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-slate-400 italic ml-1">* Quando o estoque será abatido</p>
+                </div>
               </div>
             )}
 
 
             {/* Lista Temporária (Carrinho) */}
             {!editingConsumo && cart.length > 0 && (
-               <div className="pt-6 mt-6 border-t border-slate-100">
+               <div className="pt-6 mt-6 border-t border-slate-100 space-y-6">
+                 {/* Frequencia Global para Lote */}
+                 <div className="space-y-2.5">
+                   <Label className="text-sm font-bold text-slate-700 ml-1">Frequência de Saída (Lote)</Label>
+                   <Select value={frequencia} onValueChange={(val) => setFrequencia(val as 'DIARIO' | 'SEMANAL')}>
+                     <SelectTrigger className="h-12 bg-slate-50 border-slate-200 focus:ring-2 focus:ring-blue-500/20 font-medium max-w-xs">
+                       <SelectValue placeholder="Selecione a frequência" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="DIARIO">Diário</SelectItem>
+                       <SelectItem value="SEMANAL">Semanal</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
+
                  <div className="border border-blue-100 rounded-xl overflow-hidden bg-white shadow-sm ring-4 ring-blue-50/50 transition-all animate-in fade-in slide-in-from-top-4">
                    <div className="bg-blue-50/80 px-4 py-3 border-b border-blue-100 flex justify-between items-center">
                      <span className="font-bold text-blue-900 text-sm flex items-center gap-2">

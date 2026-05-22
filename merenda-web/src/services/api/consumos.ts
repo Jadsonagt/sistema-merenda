@@ -5,6 +5,7 @@ export interface ConsumoFixo {
   escolaId: string;
   itemId: string;
   quantidadeDiaria: number;
+  frequencia?: 'DIARIO' | 'SEMANAL';
   item: {
     id: string;
     name: string;
@@ -26,7 +27,7 @@ export const getConsumosFixosByEscola = async (escolaId: string): Promise<Consum
   return response.data;
 };
 
-export const saveConsumoFixo = async (escolaId: string, data: { itemId: string; quantidadeDiaria: number }) => {
+export const saveConsumoFixo = async (escolaId: string, data: { itemId: string; quantidadeDiaria: number; frequencia?: 'DIARIO' | 'SEMANAL' }) => {
   const response = await api.post(`/escolas/${escolaId}/consumo-fixo`, data, getHeaders());
   return response.data;
 };
