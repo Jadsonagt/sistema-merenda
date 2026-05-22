@@ -104,10 +104,20 @@ export class AuditoriaController {
 
         // 2. Process Consumo Fixo (Assuming ConsumoFixo.quantidade is in packages, we convert it to fractions for consistency)
         if (workingDays > 0) {
+          const diasLetivos = workingDays;
           for (const fixo of consumosFixos) {
             const itemId = fixo.itemId;
             const item = fixo.item;
-            const fraction = fixo.quantidadeDiaria * item.packagingSize * workingDays;
+            
+            let quantidadeTotal = 0;
+            if (fixo.frequencia === 'SEMANAL') {
+              const semanas = Math.ceil(diasLetivos / 5);
+              quantidadeTotal = fixo.quantidadeDiaria * semanas;
+            } else {
+              quantidadeTotal = fixo.quantidadeDiaria * diasLetivos;
+            }
+
+            const fraction = quantidadeTotal * item.packagingSize;
 
             if (!necessidadesFracionadas.has(itemId)) {
               necessidadesFracionadas.set(itemId, { total: 0, item });

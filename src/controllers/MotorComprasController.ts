@@ -69,7 +69,15 @@ export class MotorComprasController {
       });
 
       consumosFixos.forEach(cf => {
-        demandaRestantePorItem[cf.itemId] = (demandaRestantePorItem[cf.itemId] || 0) + (cf.quantidadeDiaria * diffDias);
+        const diasLetivos = diffDias;
+        let quantidadeTotal = 0;
+        if (cf.frequencia === 'SEMANAL') {
+          const semanas = Math.ceil(diasLetivos / 5);
+          quantidadeTotal = cf.quantidadeDiaria * semanas;
+        } else {
+          quantidadeTotal = cf.quantidadeDiaria * diasLetivos;
+        }
+        demandaRestantePorItem[cf.itemId] = (demandaRestantePorItem[cf.itemId] || 0) + quantidadeTotal;
       });
 
       // --- FASE 2: Demanda do Novo Mês ---
@@ -106,7 +114,15 @@ export class MotorComprasController {
       }
 
       consumosFixos.forEach(cf => {
-        demandaMesAlvoPorItem[cf.itemId] = (demandaMesAlvoPorItem[cf.itemId] || 0) + (cf.quantidadeDiaria * diasMesAlvo);
+        const diasLetivos = diasMesAlvo;
+        let quantidadeTotal = 0;
+        if (cf.frequencia === 'SEMANAL') {
+          const semanas = Math.ceil(diasLetivos / 5);
+          quantidadeTotal = cf.quantidadeDiaria * semanas;
+        } else {
+          quantidadeTotal = cf.quantidadeDiaria * diasLetivos;
+        }
+        demandaMesAlvoPorItem[cf.itemId] = (demandaMesAlvoPorItem[cf.itemId] || 0) + quantidadeTotal;
       });
 
       // --- FASE 3: Cálculo Final ---
@@ -183,7 +199,15 @@ export class MotorComprasController {
 
         const consumosFixos = await prisma.consumoFixo.findMany({ where: { escolaId: escola.id } });
         consumosFixos.forEach(cf => {
-          demandaEscolaPorItem[escola.id][cf.itemId] = (demandaEscolaPorItem[escola.id][cf.itemId] || 0) + (cf.quantidadeDiaria * diasMesAlvo);
+          const diasLetivos = diasMesAlvo;
+          let quantidadeTotal = 0;
+          if (cf.frequencia === 'SEMANAL') {
+            const semanas = Math.ceil(diasLetivos / 5);
+            quantidadeTotal = cf.quantidadeDiaria * semanas;
+          } else {
+            quantidadeTotal = cf.quantidadeDiaria * diasLetivos;
+          }
+          demandaEscolaPorItem[escola.id][cf.itemId] = (demandaEscolaPorItem[escola.id][cf.itemId] || 0) + quantidadeTotal;
         });
       }
 

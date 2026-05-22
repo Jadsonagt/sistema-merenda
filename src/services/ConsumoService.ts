@@ -58,7 +58,23 @@ export class ConsumoService {
             });
 
             for (const fixo of consumosFixos) {
-              if (fixo.quantidadeDiaria > 0) {
+              const diasLetivos = 1; // O processamento atual roda dia a dia
+              let quantidadeTotal = 0;
+
+              if (fixo.frequencia === 'SEMANAL') {
+                // Se é semanal, calcula as semanas. Como o cron é diário, processamos apenas na Segunda-feira (1) para não duplicar.
+                if (dataBase.getDay() === 1) {
+                  const semanas = Math.ceil(diasLetivos / 5);
+                  quantidadeTotal = fixo.quantidadeDiaria * semanas;
+                }
+              } else {
+                quantidadeTotal = fixo.quantidadeDiaria * diasLetivos;
+              }
+
+              // Regra de Ouro do Estoque: sempre teto inteiro
+              const quantidadeAAbater = Math.ceil(quantidadeTotal);
+
+              if (quantidadeAAbater > 0) {
                 const existingEstoque = await tx.estoque.findUnique({
                   where: {
                     escolaId_itemId: {
@@ -69,7 +85,7 @@ export class ConsumoService {
                 });
 
                 const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
-                const novoSaldo = currentQuantity - fixo.quantidadeDiaria;
+                const novoSaldo = currentQuantity - quantidadeAAbater;
 
                 if (novoSaldo < 0) {
                   throw new Error(JSON.stringify({
@@ -102,8 +118,8 @@ export class ConsumoService {
                   data: {
                     escolaId: escola.id,
                     itemId: fixo.itemId,
-                    type: MovimentacaoType.CONSUMPTION, // CORRIGIDO! Sem numeroGuia alucinado.
-                    quantity: Math.floor(fixo.quantidadeDiaria),
+                    type: MovimentacaoType.CONSUMPTION,
+                    quantity: quantidadeAAbater,
                   },
                 });
 
