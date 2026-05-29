@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma.js';
 
+function sanitizeCoordinate(value: any): number | null {
+  if (value === undefined || value === null || value === '') return null;
+  const strValue = String(value).trim().replace(',', '.');
+  const numValue = Number(strValue);
+  return isNaN(numValue) ? null : numValue;
+}
+
 export class EscolaController {
   /**
    * @swagger
@@ -65,8 +72,8 @@ export class EscolaController {
           name,
           type,
           endereco,
-          latitude: latitude ? Number(latitude) : null,
-          longitude: longitude ? Number(longitude) : null,
+          latitude: sanitizeCoordinate(latitude),
+          longitude: sanitizeCoordinate(longitude),
           rotaId: rota_id,
         },
       });
@@ -143,8 +150,8 @@ export class EscolaController {
           name,
           type,
           endereco,
-          latitude: latitude ? Number(latitude) : null,
-          longitude: longitude ? Number(longitude) : null,
+          latitude: sanitizeCoordinate(latitude),
+          longitude: sanitizeCoordinate(longitude),
           rotaId: String(rota_id),
         },
       });
