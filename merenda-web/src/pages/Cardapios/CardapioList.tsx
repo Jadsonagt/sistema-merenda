@@ -138,16 +138,7 @@ export const CardapioList: React.FC = () => {
   const isFeriado = (c: Cardapio) => c.isFeriado || c.is_feriado;
   const todayStr = getLocalToday();
 
-  // Agrupa cardápios por dateStr (YYYY-MM-DD)
-  const cardapiosByDate = useMemo(() => {
-    const map: Record<string, Cardapio[]> = {};
-    cardapios.forEach((c) => {
-      const key = toDateString(c.data_agendada);
-      if (!map[key]) map[key] = [];
-      map[key].push(c);
-    });
-    return map;
-  }, [cardapios]);
+
 
   // Gera as semanas do mês
   const weeks = useMemo(() => getWeeksOfMonth(currentYear, currentMonth), [currentYear, currentMonth]);
@@ -167,7 +158,7 @@ export const CardapioList: React.FC = () => {
     setModalMode('create');
     setCardapioEmEdicao(null);
     setEditData(date || '');
-    setEditFichasIds(template?.fichas_ids || (template?.ficha_tecnica_id ? [template.ficha_tecnica_id] : []));
+    setEditFichasIds(template?.refeicoes ? template.refeicoes.map(r => r.fichaTecnicaId).filter(Boolean) : []);
     setEditTiposEscola(template?.tipos_escola || [...TIPOS_ESCOLA_OPTIONS]);
     setEditIsFeriado(template ? !!isFeriado(template) : false);
     setIsModalOpen(true);
@@ -181,10 +172,10 @@ export const CardapioList: React.FC = () => {
     setCardapioEmEdicao(principal);
     setEditData(toDateString(principal.data_agendada));
     
-    // Extrai todos os IDs de fichas técnicas do dia
-    const idsExtraidos = dayCardapios
-      .map(c => c.ficha_tecnica_id || c.fichaTecnicaId)
-      .filter((id): id is string => !!id);
+    // Extrai todos os IDs de fichas técnicas do dia a partir de refeicoes
+    const idsExtraidos = principal.refeicoes
+      ? (principal.refeicoes.map(r => r.fichaTecnicaId).filter(Boolean) as string[])
+      : [];
     
     setEditFichasIds(idsExtraidos);
     setEditTiposEscola(principal.tipos_escola || []);
@@ -256,77 +247,44 @@ export const CardapioList: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      // Constrói o array de refeições a partir das fichas selecionadas.
+      // Podemos inferir o tipo_refeicao a partir da ficha ou usar uma padrão (ex: 'ALMOCO')
+      const refeicoesPayload = editFichasIds.map((fichaId) => {
+        const fichaObj = fichas.find((f) => f.id === fichaId);
+        // Tenta mapear o tipo de refeição ou usa um padrão
+        let tipoRefeicao = 'ALMOCO';
+        const typeUpper = (fichaObj?.type || '').toUpperCase();
+        if (typeUpper.includes('CAFÉ') || typeUpper.includes('DESJEJUM') || typeUpper.includes('MANHÃ')) {
+          tipoRefeicao = 'DESJEJUM';
+        } else if (typeUpper.includes('LANCHE') || typeUpper.includes('MERENDA') || typeUpper.includes('TARDE')) {
+          tipoRefeicao = 'LANCHE';
+        } else if (typeUpper.includes('CEIA') || typeUpper.includes('NOITE')) {
+          tipoRefeicao = 'CEIA';
+        } else if (typeUpper.includes('ALMOÇO') || typeUpper.includes('JANTAR') || typeUpper.includes('JANTA')) {
+          tipoRefeicao = 'ALMOCO';
+        }
+        return {
+          fichaTecnicaId: fichaId,
+          tipo_refeicao: tipoRefeicao,
+        };
+      });
+
       if (modalMode === 'create') {
-        // Envia uma requisição para cada ficha selecionada
-        const promises = editFichasIds.length > 0 
-          ? editFichasIds.map(fichaId => createCardapio({
-              data_agendada: `${editData}T12:00:00.000Z`,
-              ficha_tecnica_id: fichaId,
-              isFeriado: editIsFeriado,
-              tipos_escola: editTiposEscola,
-            }))
-          : [createCardapio({
-              data_agendada: `${editData}T12:00:00.000Z`,
-              ficha_tecnica_id: null,
-              isFeriado: editIsFeriado,
-              tipos_escola: editTiposEscola,
-            })];
-        
-        await Promise.all(promises);
+        await createCardapio({
+          data_agendada: `${editData}T12:00:00.000Z`,
+          refeicoes: editIsFeriado ? [] : refeicoesPayload,
+          isFeriado: editIsFeriado,
+          tipos_escola: editTiposEscola,
+        });
         toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Cardápio criado com sucesso." });
       } else if (cardapioEmEdicao) {
-        // Pega todos os registros existentes para aquele dia
-        const registrosDoDia = cardapios.filter(c => toDateString(c.data_agendada) === editData);
-
-        if (editIsFeriado) {
-          // Se mudou para feriado, mantém apenas 1 registro e exclui os demais
-          const principal = registrosDoDia[0] || cardapioEmEdicao;
-          const paraDeletar = registrosDoDia.filter(r => r.id !== principal.id);
-          
-          await Promise.all([
-            updateCardapio(principal.id, {
-              data_agendada: `${editData}T12:00:00.000Z`,
-              ficha_tecnica_id: null,
-              tipos_escola: editTiposEscola,
-              is_feriado: true,
-            }),
-            ...paraDeletar.map(r => deleteCardapio(r.id))
-          ]);
-        } else {
-          // === LÓGICA DE DIFF PARA RECEITAS ===
-          const idsNoBanco = registrosDoDia
-            .map(r => r.ficha_tecnica_id || r.fichaTecnicaId)
-            .filter(Boolean) as string[];
-
-          // 1. ADICIONAR (IDs selecionados que não estão no banco)
-          const toAddIds = editFichasIds.filter(id => !idsNoBanco.includes(id));
-          const addPromises = toAddIds.map(fichaId => createCardapio({
-            data_agendada: `${editData}T12:00:00.000Z`,
-            ficha_tecnica_id: fichaId,
-            isFeriado: false,
-            tipos_escola: editTiposEscola,
-          }));
-
-          // 2. REMOVER (Registros no banco cujo ID não está mais selecionado)
-          const toRemove = registrosDoDia.filter(r => {
-            const fId = r.ficha_tecnica_id || r.fichaTecnicaId;
-            return r.isFeriado || r.is_feriado || (fId && !editFichasIds.includes(fId));
-          });
-          const removePromises = toRemove.map(r => deleteCardapio(r.id));
-
-          // 3. ATUALIZAR (Registros no banco que continuam selecionados)
-          const toUpdate = registrosDoDia.filter(r => !toRemove.includes(r));
-          const updatePromises = toUpdate.map(r => updateCardapio(r.id, {
-            data_agendada: `${editData}T12:00:00.000Z`,
-            ficha_tecnica_id: r.ficha_tecnica_id || r.fichaTecnicaId || null,
-            tipos_escola: editTiposEscola,
-            is_feriado: false,
-          }));
-
-          await Promise.all([...addPromises, ...removePromises, ...updatePromises]);
-        }
-
-        toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Cardápio atualizado e sincronizado." });
+        await updateCardapio(cardapioEmEdicao.id, {
+          data_agendada: `${editData}T12:00:00.000Z`,
+          refeicoes: editIsFeriado ? [] : refeicoesPayload,
+          tipos_escola: editTiposEscola,
+          is_feriado: editIsFeriado,
+        });
+        toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Cardápio atualizado com sucesso." });
       }
       handleCloseModal();
       // Atualização silenciosa
@@ -435,17 +393,10 @@ export const CardapioList: React.FC = () => {
                     return <div key={dayIdx} className="hidden lg:block min-h-[120px] bg-slate-50 rounded-md border border-slate-100" />;
                   }
 
-                  const dayCardapios = cardapiosByDate[slot.dateStr] || [];
+                  const dayCardapios = cardapios.filter(c => toDateString(c.data_agendada) === slot.dateStr);
                   const filteredCardapios = dayCardapios.filter(c => 
                     segmentoFiltro === 'TODOS' || (c.tipos_escola && c.tipos_escola.includes(segmentoFiltro))
                   );
-
-                  // Ordena cronologicamente com base no peso da refeição
-                  const sortedCardapios = [...filteredCardapios].sort((a, b) => {
-                    const weightA = getRefeicaoProps(a.ficha?.type).weight;
-                    const weightB = getRefeicaoProps(b.ficha?.type).weight;
-                    return weightA - weightB;
-                  });
 
                   const isToday = slot.dateStr === todayStr;
                   const isPast = slot.dateStr < todayStr;
@@ -481,47 +432,39 @@ export const CardapioList: React.FC = () => {
                       </div>
 
                       {/* Exibição Unificada do Cardápio */}
-                      {sortedCardapios.length === 0 ? (
+                      {filteredCardapios.length === 0 ? (
                         <div className="flex-1 flex items-center justify-center border-2 border-dashed border-slate-100 rounded-lg">
                           <Plus className="h-4 w-4 text-slate-200 group-hover:text-blue-400 transition-colors" />
                         </div>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          {sortedCardapios.map((cardapio) => (
+                          {filteredCardapios.map((cardapio) => (
                             <div key={cardapio.id} className="space-y-2">
                               {isFeriado(cardapio) ? (
                                 <div className="bg-red-50 text-red-600 p-2 rounded-md text-center font-black text-[10px] uppercase tracking-wider border border-red-200">
                                   Feriado / Recesso
                                 </div>
                               ) : (
-                                <>
-                                  <div className="flex flex-col gap-1">
-                                    {cardapio.ficha?.name && (() => {
-                                      const style = getRefeicaoProps(cardapio.ficha.type);
-                                      return (
-                                        <div className={`bg-white border-l-4 ${style.borderColor} border-y border-r border-y-slate-200 border-r-slate-200 px-2 py-1.5 rounded-md shadow-sm flex flex-col relative group/item`}>
-                                          <div className="flex justify-between items-start">
-                                            <span className="text-[10px] font-black leading-tight uppercase truncate pr-4 text-slate-800">
-                                              {cardapio.ficha.name}
-                                            </span>
-                                            <button 
-                                              onClick={(e) => handleDeleteIndividual(e, cardapio.id)}
-                                              className="absolute top-1 right-1 opacity-0 group-hover/item:opacity-100 text-slate-300 hover:text-red-500 transition-colors"
-                                              title="Excluir receita"
-                                            >
-                                              <Trash2 className="h-3 w-3" />
-                                            </button>
-                                          </div>
-                                          {cardapio.ficha.type && (
-                                            <span className={`text-[8px] font-bold uppercase mt-0.5 ${style.textColor}`}>
-                                              {cardapio.ficha.type}
-                                            </span>
-                                          )}
+                                <div className="flex flex-col gap-1">
+                                  {cardapio.refeicoes && cardapio.refeicoes.map((refeicao) => {
+                                    if (!refeicao.fichaTecnica) return null;
+                                    const style = getRefeicaoProps(refeicao.fichaTecnica.type);
+                                    return (
+                                      <div key={refeicao.id} className={`bg-white border-l-4 ${style.borderColor} border-y border-r border-y-slate-200 border-r-slate-200 px-2 py-1.5 rounded-md shadow-sm flex flex-col relative group/item`}>
+                                        <div className="flex justify-between items-start">
+                                          <span className="text-[10px] font-black leading-tight uppercase truncate pr-4 text-slate-800">
+                                            {refeicao.fichaTecnica.name}
+                                          </span>
                                         </div>
-                                      );
-                                    })()}
-                                  </div>
-                                </>
+                                        {refeicao.fichaTecnica.type && (
+                                          <span className={`text-[8px] font-bold uppercase mt-0.5 ${style.textColor}`}>
+                                            {refeicao.fichaTecnica.type}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               )}
                             </div>
                           ))}

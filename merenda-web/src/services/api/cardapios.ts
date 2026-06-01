@@ -1,17 +1,21 @@
 import { api } from '../api';
 
+export interface CardapioRefeicao {
+  id: string;
+  cardapioId: string;
+  fichaTecnicaId: string;
+  tipo_refeicao: string;
+  fichaTecnica?: { id: string; name: string; type?: string };
+}
+
 export interface Cardapio {
   id: string;
   data_agendada: string;
   descricao?: string;
-  fichaTecnicaId?: string | null;
-  ficha_tecnica_id?: string | null;
-  ficha?: { id: string; name: string; type?: string };
   isFeriado?: boolean;
   is_feriado?: boolean;
   tipos_escola?: string[];
-  fichas_ids?: string[];
-  fichas_detalhe?: { id: string; name: string }[];
+  refeicoes?: CardapioRefeicao[];
 }
 
 const getHeaders = () => {
@@ -33,7 +37,7 @@ export const getCardapios = async (mes?: number, ano?: number): Promise<Cardapio
 
 export const createCardapio = async (data: { 
   data_agendada: string; 
-  ficha_tecnica_id?: string | null; 
+  refeicoes?: { fichaTecnicaId: string; tipo_refeicao: string }[]; 
   isFeriado: boolean; 
   tipos_escola: string[];
 }): Promise<Cardapio> => {
@@ -45,7 +49,7 @@ export const updateCardapio = async (
   id: string,
   data: {
     data_agendada: string;
-    ficha_tecnica_id: string | null;
+    refeicoes: { fichaTecnicaId: string; tipo_refeicao: string }[];
     tipos_escola: string[];
     is_feriado: boolean;
   }

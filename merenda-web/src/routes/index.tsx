@@ -8,7 +8,6 @@ import { FichasList } from '../pages/Fichas/FichasList';
 import { FichaForm } from '../pages/Fichas/FichaForm';
 import { FichaDetalhes } from '../pages/Fichas/FichaDetalhes';
 import { CardapioList } from '../pages/Cardapios/CardapioList';
-import { CardapioForm } from '../pages/Cardapios/CardapioForm';
 import { MetasList } from '../pages/Metas/MetasList';
 import { MetaForm } from '../pages/Metas/MetaForm';
 import { ConsumosFixosList } from '../pages/Consumos/ConsumosFixosList';
@@ -38,7 +37,6 @@ export const AppRoutes = () => {
           <Route path="/fichas/nova" element={<FichaForm />} />
           <Route path="/fichas/:id" element={<FichaDetalhes />} />
           <Route path="/cardapios" element={<CardapioList />} />
-          <Route path="/cardapios/novo" element={<CardapioForm />} />
           <Route path="/metas" element={<MetasList />} />
           <Route path="/metas/nova" element={<MetaForm />} />
           <Route path="/consumos-fixos" element={<ConsumosFixosList />} />
