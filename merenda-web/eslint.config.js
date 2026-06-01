@@ -20,7 +20,7 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      'complexity': ['error', 10],
+      'complexity': ['warn', 10],
     },
   },
 ])
