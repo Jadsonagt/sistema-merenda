@@ -761,6 +761,7 @@ export const DiarioBordo: React.FC = () => {
                           )}
                         </SelectContent>
                       </Select>
+                    </div>
                   </div>
                 </div>
               </div>

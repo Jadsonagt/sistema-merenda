@@ -218,21 +218,6 @@ export const CardapioList: React.FC = () => {
     }
   };
 
-  const handleDeleteIndividual = async (e: React.MouseEvent, cardapioId: string) => {
-    e.stopPropagation(); // Evita abrir a modal de edição
-    if (!window.confirm('Excluir esta receita do cardápio?')) return;
-
-    try {
-      await deleteCardapio(cardapioId);
-      toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Receita removida do cardápio." });
-      // Atualização silenciosa sem setLoading para não colapsar o scroll
-      const updatedData = await getCardapios(currentMonth, currentYear);
-      setCardapios(updatedData);
-    } catch (error: any) {
-      console.error('Erro ao excluir receita:', error);
-      toast({ variant: "destructive", title: "Erro", description: "Falha ao remover a receita." });
-    }
-  };
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault();
