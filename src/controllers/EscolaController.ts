@@ -4,8 +4,12 @@ import { prisma } from '../lib/prisma.js';
 function sanitizeCoordinate(value: any): number | null {
   if (value === undefined || value === null || value === '') return null;
   const strValue = String(value).trim().replace(',', '.');
-  const numValue = Number(strValue);
-  return isNaN(numValue) ? null : numValue;
+  let numValue = Number(strValue);
+  if (isNaN(numValue)) return null;
+  if (numValue > 0) {
+    numValue = numValue * -1;
+  }
+  return numValue;
 }
 
 export class EscolaController {
