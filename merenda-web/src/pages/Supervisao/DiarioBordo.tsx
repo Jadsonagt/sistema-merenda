@@ -8,7 +8,7 @@ import {
   Plus, Trash2, MapPin, Map as MapIcon,
   ChevronRight, FileSpreadsheet,
   ChevronLeft, CalendarDays,
-  ShieldPlus
+  ShieldPlus, Lock
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { api } from '../../services/api';
@@ -50,7 +50,7 @@ interface Trecho {
   ordem: number;
   pontoId: string;
   pontoNome: string;
-  km: number;
+  km: number | string;
   lat?: number;
   lon?: number;
 }
@@ -123,7 +123,7 @@ const RoteiroForm: React.FC<{
   trechos: Trecho[];
   isSubmitting: boolean;
   onRemoveParada: (idx: number) => void;
-  onUpdateKm: (idx: number, km: number) => void;
+  onUpdateKm: (idx: number, km: string | number) => void;
   onDelete: () => void;
   hasExisting: boolean;
   onClose: () => void;
@@ -193,9 +193,9 @@ const RoteiroForm: React.FC<{
                       <div className="flex items-center gap-1.5">
                         <Input
                           type="number"
-                          className={`w-20 h-8 text-right font-mono font-bold text-xs ${(t.km || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
-                          value={t.km || 0}
-                          onChange={e => onUpdateKm(idx, Number(e.target.value))}
+                          className={`w-20 h-8 text-right font-mono font-bold text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${(Number(t.km) || 0) === 0 ? 'border-amber-300 bg-amber-50' : ''}`}
+                          value={t.km === 0 || t.km === '0' ? '' : t.km}
+                          onChange={e => onUpdateKm(idx, e.target.value)}
                         />
                         <span className="text-[10px] text-slate-400 font-bold uppercase">km</span>
                       </div>
@@ -304,9 +304,25 @@ export const DiarioBordo: React.FC = () => {
   const { toast } = useToast();
   const todayStr = getLocalToday();
 
-  const dataAtual = new Date();
-  const [filtroInicio, setFiltroInicio] = useState(format(new Date(dataAtual.getFullYear(), dataAtual.getMonth(), 1), 'yyyy-MM-dd'));
-  const [filtroFim, setFiltroFim] = useState(format(new Date(dataAtual.getFullYear(), dataAtual.getMonth(), 15), 'yyyy-MM-dd'));
+  const [filtroInicio, setFiltroInicio] = useState(() => {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    const dia = hoje.getDate();
+    return dia <= 15
+      ? format(new Date(ano, mes, 1), 'yyyy-MM-dd')
+      : format(new Date(ano, mes, 16), 'yyyy-MM-dd');
+  });
+
+  const [filtroFim, setFiltroFim] = useState(() => {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    const dia = hoje.getDate();
+    return dia <= 15
+      ? format(new Date(ano, mes, 15), 'yyyy-MM-dd')
+      : format(new Date(ano, mes + 1, 0), 'yyyy-MM-dd');
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -485,7 +501,7 @@ export const DiarioBordo: React.FC = () => {
     }
   };
 
-  const handleUpdateKm = (idx: number, val: number) => {
+  const handleUpdateKm = (idx: number, val: string | number) => {
     const novos = [...trechos];
     novos[idx].km = val;
     setTrechos(novos);
@@ -504,8 +520,8 @@ export const DiarioBordo: React.FC = () => {
     try {
       const payload = {
         data: selectedDate,
-        kmTotal: trechos.reduce((acc, t) => acc + (t.km || 0), 0),
-        trechos: trechos.map(t => ({ pontoNome: t.pontoNome, kmTrecho: t.km }))
+        kmTotal: trechos.reduce((acc, t) => acc + (Number(t.km) || 0), 0),
+        trechos: trechos.map(t => ({ pontoNome: t.pontoNome, kmTrecho: t.km === '' ? 0 : Number(t.km) || 0 }))
       };
       await api.post('/supervisao/diario-bordo', payload, getHeaders());
       toast({ className: "bg-emerald-50 text-emerald-900 border-emerald-200", title: "Sucesso", description: "Salvo com sucesso." });
@@ -591,16 +607,22 @@ export const DiarioBordo: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-4 items-stretch bg-white p-2 rounded-lg border shadow-sm w-full lg:w-auto">
           <div className="flex flex-col justify-center gap-1 px-2 border-b lg:border-b-0 lg:border-r border-slate-100 pb-2 lg:pb-0">
             <span className="text-[10px] font-bold text-slate-400 uppercase">Km Inicial do Mês</span>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-1.5 items-center">
               <Input
                 type="number"
-                className="h-8 text-xs font-bold text-slate-700 w-full lg:w-24 text-center"
+                className={`h-8 text-xs font-bold w-full lg:w-24 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                  saldoInicialMes > 0 
+                    ? 'text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed' 
+                    : 'text-slate-700 bg-white'
+                }`}
                 value={kmInputTemp}
+                disabled={saldoInicialMes > 0}
                 onChange={e => setKmInputTemp(e.target.value)}
                 onBlur={e => validarEConfirmarKm(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && validarEConfirmarKm(kmInputTemp)}
                 placeholder="Ex: 115000"
               />
+              {saldoInicialMes > 0 && <Lock className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
             </div>
           </div>
 
