@@ -17,6 +17,13 @@ export class ConsumoService {
             lte: endOfDay,
           },
         },
+        include: {
+          refeicoes: {
+            include: {
+              fichaTecnica: true,
+            },
+          },
+        },
       });
 
       if (cardapios.length === 0) {
@@ -31,85 +38,168 @@ export class ConsumoService {
           continue;
         }
 
-        // Segurança para o Prisma: caso isFeriado seja falso na gravação mas sem ficha, salta
-        if (!cardapio.fichaTecnicaId) continue;
+        for (const refeicao of cardapio.refeicoes) {
+          const ficha = refeicao.fichaTecnica;
+          if (!ficha) continue;
 
-        const ficha = await tx.fichaTecnica.findUnique({
-          where: { id: cardapio.fichaTecnicaId },
-        });
+          const metas = await tx.metaPreparo.findMany({
+            where: { fichaId: ficha.id },
+            include: { escola: true }
+          });
 
-        if (!ficha) continue;
+          for (const meta of metas) {
+            const escola = meta.escola;
 
-        const metas = await tx.metaPreparo.findMany({
-          where: { fichaId: ficha.id },
-          include: { escola: true }
-        });
+            // --- PARTE 2: CONSUMO FIXO ---
+            if (!escolasProcessadasConsumoFixo.has(escola.id)) {
+              escolasProcessadasConsumoFixo.add(escola.id);
 
-        for (const meta of metas) {
-          const escola = meta.escola;
+              const consumosFixos = await tx.consumoFixo.findMany({
+                where: { escolaId: escola.id },
+                include: { item: true },
+              });
 
-          // --- PARTE 2: CONSUMO FIXO ---
-          if (!escolasProcessadasConsumoFixo.has(escola.id)) {
-            escolasProcessadasConsumoFixo.add(escola.id);
+              for (const fixo of consumosFixos) {
+                const diasLetivos = 1; // O processamento atual roda dia a dia
+                let quantidadeTotal = 0;
 
-            const consumosFixos = await tx.consumoFixo.findMany({
-              where: { escolaId: escola.id },
-              include: { item: true },
+                if (fixo.frequencia === 'SEMANAL') {
+                  // Se é semanal, calcula as semanas. Como o cron é diário, processamos apenas na Segunda-feira (1) para não duplicar.
+                  if (dataBase.getDay() === 1) {
+                    const semanas = Math.ceil(diasLetivos / 5);
+                    quantidadeTotal = fixo.quantidadeDiaria * semanas;
+                  }
+                } else {
+                  quantidadeTotal = fixo.quantidadeDiaria * diasLetivos;
+                }
+
+                // Regra de Ouro do Estoque: sempre teto inteiro
+                const quantidadeAAbater = Math.ceil(quantidadeTotal);
+
+                if (quantidadeAAbater > 0) {
+                  const existingEstoque = await tx.estoque.findUnique({
+                    where: {
+                      escolaId_itemId: {
+                        escolaId: escola.id,
+                        itemId: fixo.itemId,
+                      },
+                    },
+                  });
+
+                  const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
+                  const novoSaldo = currentQuantity - quantidadeAAbater;
+
+                  if (novoSaldo < 0) {
+                    throw new Error(JSON.stringify({
+                      code: 'ESTOQUE_NEGATIVO',
+                      message: 'Estoque insuficiente para abate de consumo fixo.',
+                      escolaId: escola.id,
+                      escolaNome: escola.name,
+                      itemId: fixo.itemId,
+                      itemNome: fixo.item.name,
+                      quantidadeFaltante: Math.abs(novoSaldo)
+                    }));
+                  }
+
+                  if (existingEstoque) {
+                    await tx.estoque.update({
+                      where: { id: existingEstoque.id },
+                      data: { quantidade: novoSaldo },
+                    });
+                  } else {
+                    await tx.estoque.create({
+                      data: {
+                        escolaId: escola.id,
+                        itemId: fixo.itemId,
+                        quantidade: novoSaldo,
+                      },
+                    });
+                  }
+
+                  await tx.movimentacao.create({
+                    data: {
+                      escolaId: escola.id,
+                      itemId: fixo.itemId,
+                      type: MovimentacaoType.CONSUMPTION,
+                      quantity: quantidadeAAbater,
+                    },
+                  });
+
+                  logBaixaGeral.push({
+                    tipo: "Consumo Fixo",
+                    escolaId: escola.id,
+                    itemId: fixo.itemId,
+                    pacotesFisicosAbatidos: fixo.quantidadeDiaria,
+                    saldoFinal: novoSaldo
+                  });
+                }
+              }
+            }
+
+            // Regra de Cruzamento do Tipo de Escola (Abaixo do Consumo Fixo para não impedir que ele rode)
+            if (cardapio.tipos_escola && cardapio.tipos_escola.length > 0 && !cardapio.tipos_escola.includes(escola.type)) {
+              continue;
+            }
+
+            // --- PARTE 1: CARDÁPIO (usa PreparoEscola da escola) ---
+            const preparoEscola = await tx.preparoEscola.findUnique({
+              where: {
+                escolaId_fichaTecnicaId: {
+                  escolaId: escola.id,
+                  fichaTecnicaId: ficha.id,
+                },
+              },
+              include: {
+                ingredientes: {
+                  include: { item: true },
+                },
+              },
             });
 
-            for (const fixo of consumosFixos) {
-              const diasLetivos = 1; // O processamento atual roda dia a dia
-              let quantidadeTotal = 0;
+            if (!preparoEscola || preparoEscola.ingredientes.length === 0) continue;
 
-              if (fixo.frequencia === 'SEMANAL') {
-                // Se é semanal, calcula as semanas. Como o cron é diário, processamos apenas na Segunda-feira (1) para não duplicar.
-                if (dataBase.getDay() === 1) {
-                  const semanas = Math.ceil(diasLetivos / 5);
-                  quantidadeTotal = fixo.quantidadeDiaria * semanas;
-                }
-              } else {
-                quantidadeTotal = fixo.quantidadeDiaria * diasLetivos;
-              }
+            for (const ingrediente of preparoEscola.ingredientes) {
+              const { item } = ingrediente;
 
-              // Regra de Ouro do Estoque: sempre teto inteiro
-              const quantidadeAAbater = Math.ceil(quantidadeTotal);
+              const consumoTeorico = (meta.quantidadePadrao * ingrediente.quantidade) / item.packagingSize;
+              const pacoteInteiroConsumido = Math.ceil(consumoTeorico);
 
-              if (quantidadeAAbater > 0) {
+              if (pacoteInteiroConsumido > 0) {
                 const existingEstoque = await tx.estoque.findUnique({
                   where: {
                     escolaId_itemId: {
                       escolaId: escola.id,
-                      itemId: fixo.itemId,
+                      itemId: item.id,
                     },
                   },
                 });
 
                 const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
-                const novoSaldo = currentQuantity - quantidadeAAbater;
+                const newQuantity = currentQuantity - pacoteInteiroConsumido;
 
-                if (novoSaldo < 0) {
+                if (newQuantity < 0) {
                   throw new Error(JSON.stringify({
                     code: 'ESTOQUE_NEGATIVO',
-                    message: 'Estoque insuficiente para abate de consumo fixo.',
+                    message: 'Estoque insuficiente para abate de cardápio.',
                     escolaId: escola.id,
                     escolaNome: escola.name,
-                    itemId: fixo.itemId,
-                    itemNome: fixo.item.name,
-                    quantidadeFaltante: Math.abs(novoSaldo)
+                    itemId: item.id,
+                    itemNome: item.name,
+                    quantidadeFaltante: Math.abs(newQuantity)
                   }));
                 }
 
                 if (existingEstoque) {
                   await tx.estoque.update({
                     where: { id: existingEstoque.id },
-                    data: { quantidade: novoSaldo },
+                    data: { quantidade: newQuantity },
                   });
                 } else {
                   await tx.estoque.create({
                     data: {
                       escolaId: escola.id,
-                      itemId: fixo.itemId,
-                      quantidade: novoSaldo,
+                      itemId: item.id,
+                      quantidade: newQuantity,
                     },
                   });
                 }
@@ -117,108 +207,21 @@ export class ConsumoService {
                 await tx.movimentacao.create({
                   data: {
                     escolaId: escola.id,
-                    itemId: fixo.itemId,
+                    itemId: item.id,
                     type: MovimentacaoType.CONSUMPTION,
-                    quantity: quantidadeAAbater,
+                    quantity: pacoteInteiroConsumido,
                   },
                 });
 
                 logBaixaGeral.push({
-                  tipo: "Consumo Fixo",
-                  escolaId: escola.id,
-                  itemId: fixo.itemId,
-                  pacotesFisicosAbatidos: fixo.quantidadeDiaria,
-                  saldoFinal: novoSaldo
-                });
-              }
-            }
-          }
-
-          // Regra de Cruzamento do Tipo de Escola (Abaixo do Consumo Fixo para não impedir que ele rode)
-          if (cardapio.tipos_escola && cardapio.tipos_escola.length > 0 && !cardapio.tipos_escola.includes(escola.type)) {
-            continue;
-          }
-
-          // --- PARTE 1: CARDÁPIO (usa PreparoEscola da escola) ---
-          const preparoEscola = await tx.preparoEscola.findUnique({
-            where: {
-              escolaId_fichaTecnicaId: {
-                escolaId: escola.id,
-                fichaTecnicaId: ficha.id,
-              },
-            },
-            include: {
-              ingredientes: {
-                include: { item: true },
-              },
-            },
-          });
-
-          if (!preparoEscola || preparoEscola.ingredientes.length === 0) continue;
-
-          for (const ingrediente of preparoEscola.ingredientes) {
-            const { item } = ingrediente;
-
-            const consumoTeorico = (meta.quantidadePadrao * ingrediente.quantidade) / item.packagingSize;
-            const pacoteInteiroConsumido = Math.ceil(consumoTeorico);
-
-            if (pacoteInteiroConsumido > 0) {
-              const existingEstoque = await tx.estoque.findUnique({
-                where: {
-                  escolaId_itemId: {
-                    escolaId: escola.id,
-                    itemId: item.id,
-                  },
-                },
-              });
-
-              const currentQuantity = existingEstoque ? existingEstoque.quantidade : 0;
-              const newQuantity = currentQuantity - pacoteInteiroConsumido;
-
-              if (newQuantity < 0) {
-                throw new Error(JSON.stringify({
-                  code: 'ESTOQUE_NEGATIVO',
-                  message: 'Estoque insuficiente para abate de cardápio.',
-                  escolaId: escola.id,
-                  escolaNome: escola.name,
-                  itemId: item.id,
-                  itemNome: item.name,
-                  quantidadeFaltante: Math.abs(newQuantity)
-                }));
-              }
-
-              if (existingEstoque) {
-                await tx.estoque.update({
-                  where: { id: existingEstoque.id },
-                  data: { quantidade: newQuantity },
-                });
-              } else {
-                await tx.estoque.create({
-                  data: {
-                    escolaId: escola.id,
-                    itemId: item.id,
-                    quantidade: newQuantity,
-                  },
-                });
-              }
-
-              await tx.movimentacao.create({
-                data: {
+                  tipo: 'Cardápio',
+                  cardapioId: cardapio.id,
                   escolaId: escola.id,
                   itemId: item.id,
-                  type: MovimentacaoType.CONSUMPTION,
-                  quantity: pacoteInteiroConsumido,
-                },
-              });
-
-              logBaixaGeral.push({
-                tipo: 'Cardápio',
-                cardapioId: cardapio.id,
-                escolaId: escola.id,
-                itemId: item.id,
-                pacotesFisicosAbatidos: pacoteInteiroConsumido,
-                saldoFinal: newQuantity,
-              });
+                  pacotesFisicosAbatidos: pacoteInteiroConsumido,
+                  saldoFinal: newQuantity,
+                });
+              }
             }
           }
         }

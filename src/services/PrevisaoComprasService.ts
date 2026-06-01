@@ -45,6 +45,9 @@ export class PrevisaoComprasService {
         },
         isFeriado: false
       },
+      include: {
+        refeicoes: true
+      }
     });
 
     const demandaAgrupada = new Map<string, { itemId: string; itemNome: string; totalDemanda: number }>();
@@ -55,44 +58,44 @@ export class PrevisaoComprasService {
         continue;
       }
 
-      if (!cardapio.fichaTecnicaId) continue;
-
-      // Busca o preparo específico desta escola para esta ficha
-      const preparoEscola = await prisma.preparoEscola.findUnique({
-        where: {
-          escolaId_fichaTecnicaId: {
-            escolaId,
-            fichaTecnicaId: cardapio.fichaTecnicaId,
+      for (const refeicao of cardapio.refeicoes) {
+        // Busca o preparo específico desta escola para esta ficha
+        const preparoEscola = await prisma.preparoEscola.findUnique({
+          where: {
+            escolaId_fichaTecnicaId: {
+              escolaId,
+              fichaTecnicaId: refeicao.fichaTecnicaId,
+            },
           },
-        },
-        include: {
-          ingredientes: {
-            include: { item: true },
+          include: {
+            ingredientes: {
+              include: { item: true },
+            },
           },
-        },
-      });
+        });
 
-      if (!preparoEscola || preparoEscola.ingredientes.length === 0) continue;
+        if (!preparoEscola || preparoEscola.ingredientes.length === 0) continue;
 
-      // Descobre a meta da escola para a ficha do cardápio
-      const meta = escola.metasPreparo.find(m => m.fichaId === cardapio.fichaTecnicaId);
-      if (!meta) continue;
+        // Descobre a meta da escola para a ficha do cardápio
+        const meta = escola.metasPreparo.find(m => m.fichaId === refeicao.fichaTecnicaId);
+        if (!meta) continue;
 
-      for (const ingrediente of preparoEscola.ingredientes) {
-        const { item } = ingrediente;
-        const consumoTeorico = (meta.quantidadePadrao * ingrediente.quantidade) / item.packagingSize;
-        const pacotesNecessarios = Math.ceil(consumoTeorico);
+        for (const ingrediente of preparoEscola.ingredientes) {
+          const { item } = ingrediente;
+          const consumoTeorico = (meta.quantidadePadrao * ingrediente.quantidade) / item.packagingSize;
+          const pacotesNecessarios = Math.ceil(consumoTeorico);
 
-        if (pacotesNecessarios > 0) {
-          const existente = demandaAgrupada.get(item.id);
-          if (existente) {
-            existente.totalDemanda += pacotesNecessarios;
-          } else {
-            demandaAgrupada.set(item.id, {
-              itemId: item.id,
-              itemNome: item.name,
-              totalDemanda: pacotesNecessarios
-            });
+          if (pacotesNecessarios > 0) {
+            const existente = demandaAgrupada.get(item.id);
+            if (existente) {
+              existente.totalDemanda += pacotesNecessarios;
+            } else {
+              demandaAgrupada.set(item.id, {
+                itemId: item.id,
+                itemNome: item.name,
+                totalDemanda: pacotesNecessarios
+              });
+            }
           }
         }
       }

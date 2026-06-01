@@ -48,16 +48,20 @@ export class AuditoriaController {
             },
           },
           include: {
-            ficha: {
+            refeicoes: {
               include: {
-                preparos: {
+                fichaTecnica: {
                   include: {
-                    ingredientes: {
-                      include: { item: true },
+                    preparos: {
+                      include: {
+                        ingredientes: {
+                          include: { item: true },
+                        },
+                      },
                     },
+                    metasPreparo: true,
                   },
                 },
-                metasPreparo: true,
               },
             },
           },
@@ -83,21 +87,24 @@ export class AuditoriaController {
 
         // 1. Process Cardapios
         for (const cardapio of cardapios) {
-          if (!cardapio.ficha) continue;
+          for (const refeicao of cardapio.refeicoes) {
+            const ficha = refeicao.fichaTecnica;
+            if (!ficha) continue;
 
-          for (const meta of cardapio.ficha.metasPreparo) {
-            const preparoEscola = cardapio.ficha.preparos.find((p) => p.escolaId === meta.escolaId);
-            if (!preparoEscola) continue;
+            for (const meta of ficha.metasPreparo) {
+              const preparoEscola = ficha.preparos.find((p: any) => p.escolaId === meta.escolaId);
+              if (!preparoEscola) continue;
 
-            for (const ingrediente of preparoEscola.ingredientes) {
-              const itemId = ingrediente.itemId;
-              const item = ingrediente.item;
-              const fraction = meta.quantidadePadrao * ingrediente.quantidade;
+              for (const ingrediente of preparoEscola.ingredientes) {
+                const itemId = ingrediente.itemId;
+                const item = ingrediente.item;
+                const fraction = meta.quantidadePadrao * ingrediente.quantidade;
 
-              if (!necessidadesFracionadas.has(itemId)) {
-                necessidadesFracionadas.set(itemId, { total: 0, item });
+                if (!necessidadesFracionadas.has(itemId)) {
+                  necessidadesFracionadas.set(itemId, { total: 0, item });
+                }
+                necessidadesFracionadas.get(itemId)!.total += fraction;
               }
-              necessidadesFracionadas.get(itemId)!.total += fraction;
             }
           }
         }

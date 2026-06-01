@@ -38,6 +38,9 @@ export class MotorComprasController {
           },
           isFeriado: false,
           tipos_escola: { has: escola.type }
+        },
+        include: {
+          refeicoes: true
         }
       });
 
@@ -45,20 +48,22 @@ export class MotorComprasController {
 
       // Consumo de cardápio restante
       for (const cardapio of cardapiosRestantes) {
-        const preparo = await prisma.preparoEscola.findUnique({
-          where: {
-            escolaId_fichaTecnicaId: {
-              escolaId: escola.id,
-              fichaTecnicaId: cardapio.fichaTecnicaId!
-            }
-          },
-          include: { ingredientes: true }
-        });
-
-        if (preparo) {
-          preparo.ingredientes.forEach(ing => {
-            demandaRestantePorItem[ing.itemId] = (demandaRestantePorItem[ing.itemId] || 0) + ing.quantidade;
+        for (const refeicao of cardapio.refeicoes) {
+          const preparo = await prisma.preparoEscola.findUnique({
+            where: {
+              escolaId_fichaTecnicaId: {
+                escolaId: escola.id,
+                fichaTecnicaId: refeicao.fichaTecnicaId
+              }
+            },
+            include: { ingredientes: true }
           });
+
+          if (preparo) {
+            preparo.ingredientes.forEach(ing => {
+              demandaRestantePorItem[ing.itemId] = (demandaRestantePorItem[ing.itemId] || 0) + ing.quantidade;
+            });
+          }
         }
       }
 
@@ -89,6 +94,9 @@ export class MotorComprasController {
           },
           isFeriado: false,
           tipos_escola: { has: escola.type }
+        },
+        include: {
+          refeicoes: true
         }
       });
 
@@ -96,20 +104,22 @@ export class MotorComprasController {
       const diasMesAlvo = dataFimAlvo.getDate();
 
       for (const cardapio of cardapiosAlvo) {
-        const preparo = await prisma.preparoEscola.findUnique({
-          where: {
-            escolaId_fichaTecnicaId: {
-              escolaId: escola.id,
-              fichaTecnicaId: cardapio.fichaTecnicaId!
-            }
-          },
-          include: { ingredientes: true }
-        });
-
-        if (preparo) {
-          preparo.ingredientes.forEach(ing => {
-            demandaMesAlvoPorItem[ing.itemId] = (demandaMesAlvoPorItem[ing.itemId] || 0) + ing.quantidade;
+        for (const refeicao of cardapio.refeicoes) {
+          const preparo = await prisma.preparoEscola.findUnique({
+            where: {
+              escolaId_fichaTecnicaId: {
+                escolaId: escola.id,
+                fichaTecnicaId: refeicao.fichaTecnicaId
+              }
+            },
+            include: { ingredientes: true }
           });
+
+          if (preparo) {
+            preparo.ingredientes.forEach(ing => {
+              demandaMesAlvoPorItem[ing.itemId] = (demandaMesAlvoPorItem[ing.itemId] || 0) + ing.quantidade;
+            });
+          }
         }
       }
 
@@ -181,19 +191,21 @@ export class MotorComprasController {
       for (const escola of escolas) {
         demandaEscolaPorItem[escola.id] = {};
         const cardapiosAlvo = await prisma.cardapio.findMany({
-          where: { data_agendada: { gte: dataInicioAlvo, lte: dataFimAlvo }, isFeriado: false, tipos_escola: { has: escola.type } }
+          where: { data_agendada: { gte: dataInicioAlvo, lte: dataFimAlvo }, isFeriado: false, tipos_escola: { has: escola.type } },
+          include: { refeicoes: true }
         });
 
         for (const cardapio of cardapiosAlvo) {
-          if (!cardapio.fichaTecnicaId) continue;
-          const preparo = await prisma.preparoEscola.findUnique({
-            where: { escolaId_fichaTecnicaId: { escolaId: escola.id, fichaTecnicaId: cardapio.fichaTecnicaId } },
-            include: { ingredientes: true }
-          });
-          if (preparo) {
-            preparo.ingredientes.forEach(ing => {
-              demandaEscolaPorItem[escola.id][ing.itemId] = (demandaEscolaPorItem[escola.id][ing.itemId] || 0) + ing.quantidade;
+          for (const refeicao of cardapio.refeicoes) {
+            const preparo = await prisma.preparoEscola.findUnique({
+              where: { escolaId_fichaTecnicaId: { escolaId: escola.id, fichaTecnicaId: refeicao.fichaTecnicaId } },
+              include: { ingredientes: true }
             });
+            if (preparo) {
+              preparo.ingredientes.forEach(ing => {
+                demandaEscolaPorItem[escola.id][ing.itemId] = (demandaEscolaPorItem[escola.id][ing.itemId] || 0) + ing.quantidade;
+              });
+            }
           }
         }
 

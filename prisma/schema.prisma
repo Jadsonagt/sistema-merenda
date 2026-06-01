@@ -125,7 +125,7 @@ model FichaTecnica {
   type          String // e.g., Bolo, Cafe da manha
   planejamentos PlanejamentoMensal[]
   metasPreparo  MetaPreparo[]
-  cardapios     Cardapio[]
+  cardapios     CardapioRefeicao[]
   preparos      PreparoEscola[]
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
@@ -221,17 +221,27 @@ model MetaPreparo {
 }
 
 model Cardapio {
-  id             String        @id @default(uuid())
-  data_agendada  DateTime
-  descricao      String?
-  isFeriado      Boolean       @default(false)
-  tipos_escola   String[]
-  fichaTecnicaId String?
-  ficha          FichaTecnica? @relation(fields: [fichaTecnicaId], references: [id])
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id            String             @id @default(uuid())
+  data_agendada DateTime
+  descricao     String?
+  isFeriado     Boolean            @default(false)
+  tipos_escola  String[]
+  refeicoes     CardapioRefeicao[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
 
   @@map("cardapios")
+}
+
+model CardapioRefeicao {
+  id             String       @id @default(uuid())
+  cardapioId     String
+  fichaTecnicaId String
+  tipo_refeicao  String // e.g., 'DESJEJUM', 'ALMOCO', 'LANCHE'
+  cardapio       Cardapio     @relation(fields: [cardapioId], references: [id], onDelete: Cascade)
+  fichaTecnica   FichaTecnica @relation(fields: [fichaTecnicaId], references: [id])
+
+  @@map("cardapio_refeicoes")
 }
 
 model ConsumoFixo {

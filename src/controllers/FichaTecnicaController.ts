@@ -116,7 +116,7 @@ export class FichaTecnicaController {
       const { id } = req.params;
 
       // Trava manual: verificar se a ficha está agendada em algum cardápio
-      const usoNoCardapio = await prisma.cardapio.findFirst({
+      const usoNoCardapio = await prisma.cardapioRefeicao.findFirst({
         where: { fichaTecnicaId: String(id) },
       });
 

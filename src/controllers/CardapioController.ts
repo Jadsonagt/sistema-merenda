@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma.js';
 export class CardapioController {
     async criar(req: Request, res: Response) {
         try {
-            const { data_agendada, descricao, ficha_tecnica_id, tipos_escola, isFeriado } = req.body;
+            const { data_agendada, descricao, refeicoes, tipos_escola, isFeriado } = req.body;
 
             if (!data_agendada || !tipos_escola || !Array.isArray(tipos_escola) || tipos_escola.length === 0) {
                 return res.status(400).json({ error: 'Campos obrigatorios ausentes: data_agendada, tipos_escola (Array de strings obrigatório)' });
@@ -12,8 +12,8 @@ export class CardapioController {
 
             const feriadoBool = Boolean(isFeriado);
 
-            if (!feriadoBool && !ficha_tecnica_id) {
-                return res.status(400).json({ error: 'Campo ficha_tecnica_id obrigatorio se nao for feriado.' });
+            if (!feriadoBool && (!refeicoes || !Array.isArray(refeicoes) || refeicoes.length === 0)) {
+                return res.status(400).json({ error: 'Array de refeicoes obrigatorio se nao for feriado.' });
             }
 
             // Converte a string de data ("YYYY-MM-DD") para o objeto Date do Prisma
@@ -28,7 +28,19 @@ export class CardapioController {
                     descricao: descricao || null,
                     isFeriado: feriadoBool,
                     tipos_escola: tipos_escola,
-                    fichaTecnicaId: feriadoBool ? null : ficha_tecnica_id,
+                    refeicoes: {
+                        create: feriadoBool ? [] : refeicoes.map((r: any) => ({
+                            fichaTecnicaId: r.fichaTecnicaId,
+                            tipo_refeicao: r.tipo_refeicao,
+                        })),
+                    },
+                },
+                include: {
+                    refeicoes: {
+                        include: {
+                            fichaTecnica: true,
+                        },
+                    },
                 },
             });
 
@@ -65,7 +77,11 @@ export class CardapioController {
                     },
                 },
                 include: {
-                    ficha: true,
+                    refeicoes: {
+                        include: {
+                            fichaTecnica: true,
+                        },
+                    },
                 },
                 orderBy: {
                     data_agendada: 'asc',
@@ -103,9 +119,12 @@ export class CardapioController {
                         lte: endOfDay,
                     },
                 },
-                // O relation name no schema foi nomeado 'ficha', caso nomeie 'fichaTecnica', ajuste este campo!
                 include: {
-                    ficha: true,
+                    refeicoes: {
+                        include: {
+                            fichaTecnica: true,
+                        },
+                    },
                 },
             });
 
@@ -119,7 +138,7 @@ export class CardapioController {
     async atualizar(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const { data_agendada, descricao, ficha_tecnica_id, tipos_escola, isFeriado } = req.body;
+            const { data_agendada, descricao, refeicoes, tipos_escola, isFeriado } = req.body;
 
             if (!data_agendada || !tipos_escola || !Array.isArray(tipos_escola) || tipos_escola.length === 0) {
                 return res.status(400).json({ error: 'Campos obrigatórios ausentes: data_agendada, tipos_escola' });
@@ -127,8 +146,8 @@ export class CardapioController {
 
             const feriadoBool = Boolean(isFeriado);
 
-            if (!feriadoBool && !ficha_tecnica_id) {
-                return res.status(400).json({ error: 'Campo ficha_tecnica_id obrigatório se não for feriado.' });
+            if (!feriadoBool && (!refeicoes || !Array.isArray(refeicoes) || refeicoes.length === 0)) {
+                return res.status(400).json({ error: 'Array de refeicoes obrigatório se não for feriado.' });
             }
 
             const dataServico = new Date(data_agendada);
@@ -136,16 +155,33 @@ export class CardapioController {
                 return res.status(400).json({ error: 'Invalid data_agendada format. Use ISO format or YYYY-MM-DD.' });
             }
 
-            const cardapio = await prisma.cardapio.update({
-                where: { id: String(id) },
-                data: {
-                    data_agendada: dataServico,
-                    descricao: descricao || null,
-                    isFeriado: feriadoBool,
-                    tipos_escola: tipos_escola,
-                    fichaTecnicaId: feriadoBool ? null : ficha_tecnica_id,
-                },
-                include: { ficha: true },
+            const cardapio = await prisma.$transaction(async (tx) => {
+                await tx.cardapioRefeicao.deleteMany({
+                    where: { cardapioId: String(id) },
+                });
+
+                return await tx.cardapio.update({
+                    where: { id: String(id) },
+                    data: {
+                        data_agendada: dataServico,
+                        descricao: descricao || null,
+                        isFeriado: feriadoBool,
+                        tipos_escola: tipos_escola,
+                        refeicoes: {
+                            create: feriadoBool ? [] : refeicoes.map((r: any) => ({
+                                fichaTecnicaId: r.fichaTecnicaId,
+                                tipo_refeicao: r.tipo_refeicao,
+                            })),
+                        },
+                    },
+                    include: {
+                        refeicoes: {
+                            include: {
+                                fichaTecnica: true,
+                            },
+                        },
+                    },
+                });
             });
 
             return res.status(200).json(cardapio);

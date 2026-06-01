@@ -35,6 +35,9 @@ export class MotorController {
               lte: dayEnd
             },
             isFeriado: false
+          },
+          include: {
+            refeicoes: true
           }
         });
 
@@ -55,22 +58,24 @@ export class MotorController {
           // C. Calcular Consumo por Cardápio
           for (const cardapio of cardapios) {
             if (cardapio.tipos_escola.includes(escola.type)) {
-              // Buscar preparo específico desta escola para esta ficha
-              const preparo = await tx.preparoEscola.findUnique({
-                where: {
-                  escolaId_fichaTecnicaId: {
-                    escolaId: escola.id,
-                    fichaTecnicaId: cardapio.fichaTecnicaId!
-                  }
-                },
-                include: { ingredientes: true }
-              });
-
-              if (preparo) {
-                escolaTeveConsumo = true;
-                preparo.ingredientes.forEach(ing => {
-                  consolidadoGasto[ing.itemId] = (consolidadoGasto[ing.itemId] || 0) + ing.quantidade;
+              for (const refeicao of cardapio.refeicoes) {
+                // Buscar preparo específico desta escola para esta ficha
+                const preparo = await tx.preparoEscola.findUnique({
+                  where: {
+                    escolaId_fichaTecnicaId: {
+                      escolaId: escola.id,
+                      fichaTecnicaId: refeicao.fichaTecnicaId
+                    }
+                  },
+                  include: { ingredientes: true }
                 });
+
+                if (preparo) {
+                  escolaTeveConsumo = true;
+                  preparo.ingredientes.forEach(ing => {
+                    consolidadoGasto[ing.itemId] = (consolidadoGasto[ing.itemId] || 0) + ing.quantidade;
+                  });
+                }
               }
             }
           }
