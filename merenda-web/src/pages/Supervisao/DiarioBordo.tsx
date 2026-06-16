@@ -643,9 +643,9 @@ export const DiarioBordo: React.FC = () => {
             </div>
           </div>
 
-          <Button onClick={() => { window.alert("SINAL DE FUMAÇA: O código novo chegou no Vercel!"); handleExport(); }} className="h-12 lg:h-auto bg-emerald-600 hover:bg-emerald-700 text-white flex flex-row lg:flex-col gap-2 lg:gap-1 items-center justify-center px-4">
+          <Button onClick={handleExport} className="h-12 lg:h-auto bg-emerald-600 hover:bg-emerald-700 text-white flex flex-row lg:flex-col gap-2 lg:gap-1 items-center justify-center px-4">
             <FileSpreadsheet className="h-4 w-4" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Baixar Excel (TESTE)</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Baixar Excel</span>
           </Button>
         </div>
       </div>
@@ -895,7 +895,7 @@ export const DiarioBordo: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsExportModalOpen(false)}>Cancelar</Button>
-            <Button className="bg-emerald-600 text-white" onClick={() => { window.alert("SINAL DE FUMAÇA: O código novo chegou no Vercel!"); handleExport(); }} disabled={isExporting}>{isExporting ? 'Processando...' : 'Baixar Excel (TESTE)'}</Button>
+            <Button className="bg-emerald-600 text-white" onClick={handleExport} disabled={isExporting}>{isExporting ? 'Processando...' : 'Baixar Excel'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
