@@ -35,7 +35,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
           'RETORNO': retorno.toString(),
           'SIGLA': 'R/T/R',
           'KM RODADOS': km.toString(),
-          'VALOR A RECEBER': `R$ ${valor.toFixed(2).replace('.', ',')}`,
+          'VALOR R$ 1,00': `R$ ${valor.toFixed(2).replace('.', ',')}`,
           'PED. R$': '',
           'ESTAC. R$': '',
           'OBSERVAÇÕES': `${origem}, ${destino}`
@@ -59,7 +59,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
           'RETORNO': retornoIda.toString(),
           'SIGLA': 'R/T/R',
           'KM RODADOS': kmIda.toString(),
-          'VALOR A RECEBER': `R$ ${valorIda.toFixed(2).replace('.', ',')}`,
+          'VALOR R$ 1,00': `R$ ${valorIda.toFixed(2).replace('.', ',')}`,
           'PED. R$': '',
           'ESTAC. R$': '',
           'OBSERVAÇÕES': `${origemIda}, ${destinoIda}`
@@ -91,7 +91,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
             'RETORNO': retornoMiolo.toString(),
             'SIGLA': 'SUP',
             'KM RODADOS': kmMiolo.toString(),
-            'VALOR A RECEBER': `R$ ${valorMiolo.toFixed(2).replace('.', ',')}`,
+            'VALOR R$ 1,00': `R$ ${valorMiolo.toFixed(2).replace('.', ',')}`,
             'PED. R$': '',
             'ESTAC. R$': '',
             'OBSERVAÇÕES': obsMiolo
@@ -116,7 +116,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
           'RETORNO': retornoVolta.toString(),
           'SIGLA': 'R/T/R',
           'KM RODADOS': kmVolta.toString(),
-          'VALOR A RECEBER': `R$ ${valorVolta.toFixed(2).replace('.', ',')}`,
+          'VALOR R$ 1,00': `R$ ${valorVolta.toFixed(2).replace('.', ',')}`,
           'PED. R$': '',
           'ESTAC. R$': '',
           'OBSERVAÇÕES': `${origemVolta}, ${destinoVolta}`
