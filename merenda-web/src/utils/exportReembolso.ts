@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { format, parseISO } from 'date-fns';
 
-// Não há mais arredondamento customizado, os valores serão exatos com 1 casa decimal.
+// Não há mais arredondamento customizado, os valores serão exatos com 1 casa decimal. - Forçar Deploy Vercel
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
