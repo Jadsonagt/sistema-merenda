@@ -16,14 +16,14 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
     const dataFormatada = format(parseISO(d.data), 'dd/MM/yyyy');
 
     if (d.trechos && d.trechos.length > 1) {
-      for (let i = 1; i < d.trechos.length; i++) {
-        const origem = d.trechos[i - 1].pontoNome;
-        const destino = d.trechos[i].pontoNome;
-        
-        // Aplica o arredondamento customizado antes de qualquer cálculo financeiro ou de odômetro
-        const kmExato = Number(d.trechos[i].kmTrecho) || 0;
-        const km = Number(kmExato.toFixed(1));
+      const N = d.trechos.length;
 
+      if (N === 2) {
+        // Fallback: Apenas 1 trecho
+        const origem = d.trechos[0].pontoNome;
+        const destino = d.trechos[1].pontoNome;
+        const kmExato = Number(d.trechos[1].kmTrecho) || 0;
+        const km = Number(kmExato.toFixed(1));
         const valor = km * 1.00;
 
         const saida = odometroAtual;
@@ -33,6 +33,7 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
           'DATA': dataFormatada,
           'SAÍDA': saida.toString(),
           'RETORNO': retorno.toString(),
+          'SIGLA': 'R/T/R',
           'KM RODADOS': km.toString(),
           'VALOR A RECEBER': `R$ ${valor.toFixed(2).replace('.', ',')}`,
           'PED. R$': '',
@@ -41,6 +42,87 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
         });
 
         odometroAtual = retorno;
+      } else {
+        // Ida: Primeiro trecho (índice 1)
+        const origemIda = d.trechos[0].pontoNome;
+        const destinoIda = d.trechos[1].pontoNome;
+        const kmExatoIda = Number(d.trechos[1].kmTrecho) || 0;
+        const kmIda = Number(kmExatoIda.toFixed(1));
+        const valorIda = kmIda * 1.00;
+
+        const saidaIda = odometroAtual;
+        const retornoIda = odometroAtual + kmIda;
+
+        linhas.push({
+          'DATA': dataFormatada,
+          'SAÍDA': saidaIda.toString(),
+          'RETORNO': retornoIda.toString(),
+          'SIGLA': 'R/T/R',
+          'KM RODADOS': kmIda.toString(),
+          'VALOR A RECEBER': `R$ ${valorIda.toFixed(2).replace('.', ',')}`,
+          'PED. R$': '',
+          'ESTAC. R$': '',
+          'OBSERVAÇÕES': `${origemIda}, ${destinoIda}`
+        });
+
+        odometroAtual = retornoIda;
+
+        // Supervisão/Miolo: Índices 2 até N-2 (se houver, ou seja, N >= 4)
+        if (N >= 4) {
+          let kmExatoMiolo = 0;
+          for (let j = 2; j <= N - 2; j++) {
+            kmExatoMiolo += Number(d.trechos[j].kmTrecho) || 0;
+          }
+          const kmMiolo = Number(kmExatoMiolo.toFixed(1));
+          const valorMiolo = kmMiolo * 1.00;
+
+          const saidaMiolo = odometroAtual;
+          const retornoMiolo = odometroAtual + kmMiolo;
+
+          const pontosMiolo: string[] = [];
+          for (let j = 1; j <= N - 2; j++) {
+            pontosMiolo.push(d.trechos[j].pontoNome);
+          }
+          const obsMiolo = pontosMiolo.join(', ');
+
+          linhas.push({
+            'DATA': dataFormatada,
+            'SAÍDA': saidaMiolo.toString(),
+            'RETORNO': retornoMiolo.toString(),
+            'SIGLA': 'SUP',
+            'KM RODADOS': kmMiolo.toString(),
+            'VALOR A RECEBER': `R$ ${valorMiolo.toFixed(2).replace('.', ',')}`,
+            'PED. R$': '',
+            'ESTAC. R$': '',
+            'OBSERVAÇÕES': obsMiolo
+          });
+
+          odometroAtual = retornoMiolo;
+        }
+
+        // Volta: Último trecho (índice N-1)
+        const origemVolta = d.trechos[N - 2].pontoNome;
+        const destinoVolta = d.trechos[N - 1].pontoNome;
+        const kmExatoVolta = Number(d.trechos[N - 1].kmTrecho) || 0;
+        const kmVolta = Number(kmExatoVolta.toFixed(1));
+        const valorVolta = kmVolta * 1.00;
+
+        const saidaVolta = odometroAtual;
+        const retornoVolta = odometroAtual + kmVolta;
+
+        linhas.push({
+          'DATA': dataFormatada,
+          'SAÍDA': saidaVolta.toString(),
+          'RETORNO': retornoVolta.toString(),
+          'SIGLA': 'R/T/R',
+          'KM RODADOS': kmVolta.toString(),
+          'VALOR A RECEBER': `R$ ${valorVolta.toFixed(2).replace('.', ',')}`,
+          'PED. R$': '',
+          'ESTAC. R$': '',
+          'OBSERVAÇÕES': `${origemVolta}, ${destinoVolta}`
+        });
+
+        odometroAtual = retornoVolta;
       }
     }
   });
