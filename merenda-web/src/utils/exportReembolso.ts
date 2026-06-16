@@ -130,5 +130,5 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
   const ws = XLSX.utils.json_to_sheet(linhas);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Reembolso");
-  XLSX.writeFile(wb, `Reembolso_${format(new Date(), 'ddMMyyyy_HHmm')}.xlsx`);
+  XLSX.writeFile(wb, "Diario_Votorantim_NOVO.xlsx");
 };
