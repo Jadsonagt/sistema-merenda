@@ -338,7 +338,19 @@ export const DiarioBordo: React.FC = () => {
       ]);
       setEscolas(escRes.status === 'fulfilled' ? (escRes.value.data || { minhaRota: [], outrasRotas: [] }) : { minhaRota: [], outrasRotas: [] });
       setPontos(pontoRes.status === 'fulfilled' ? (pontoRes.value.data || []) : []);
-      setDiarios(diarioRes.status === 'fulfilled' ? (diarioRes.value.data || []) : []);
+      const fetchedDiarios = diarioRes.status === 'fulfilled' ? (diarioRes.value.data || []) : [];
+      setDiarios(fetchedDiarios);
+
+      // Se não houver saldoInicialMes no localStorage, tenta recuperar do primeiro diário do mês que possui odômetro salvo no banco
+      if (fetchedDiarios.length > 0) {
+        const sorted = [...fetchedDiarios].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+        const firstOdo = sorted[0]?.odometroInicial;
+        if (firstOdo && firstOdo > 0 && !localStorage.getItem(chaveStorage)) {
+          setSaldoInicialMes(firstOdo);
+          setKmInputTemp(firstOdo.toString());
+          localStorage.setItem(chaveStorage, firstOdo.toString());
+        }
+      }
       setUserProfile(userRes.status === 'fulfilled' ? userRes.value.data : null);
       setDemandasRede(demandasRes.status === 'fulfilled' ? (demandasRes.value.data || []) : []);
     } catch (error) {
@@ -518,9 +530,20 @@ export const DiarioBordo: React.FC = () => {
     }
     setIsSubmitting(true);
     try {
+      // Calcular o odômetro inicial da data selecionada com base no saldoInicialMes e nos diários anteriores
+      const sortedDiarios = [...diarios].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+      let calculatedOdo = saldoInicialMes;
+      for (const d of sortedDiarios) {
+        const dDate = typeof d.data === 'string' ? d.data.substring(0, 10) : '';
+        if (dDate < selectedDate) {
+          calculatedOdo += (Number(d.kmTotal) || 0);
+        }
+      }
+
       const payload = {
         data: selectedDate,
         kmTotal: trechos.reduce((acc, t) => acc + (Number(t.km) || 0), 0),
+        odometroInicial: calculatedOdo,
         trechos: trechos.map(t => ({ pontoNome: t.pontoNome, kmTrecho: t.km === '' ? 0 : Number(t.km) || 0 }))
       };
       await api.post('/supervisao/diario-bordo', payload, getHeaders());
@@ -558,7 +581,8 @@ export const DiarioBordo: React.FC = () => {
       try {
         const diariosOrdenados = [...(diarios || [])].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 
-        let odoAcumulado = saldoInicialMes;
+        const primeiroDiarioDoMes = diariosOrdenados[0];
+        let odoAcumulado = saldoInicialMes || (primeiroDiarioDoMes?.odometroInicial || 0);
         const diariosFiltrados: Diario[] = [];
 
         diariosOrdenados.forEach(d => {

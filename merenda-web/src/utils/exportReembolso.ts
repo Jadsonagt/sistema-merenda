@@ -8,7 +8,22 @@ import { format, parseISO } from 'date-fns';
 export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const linhas: any[] = [];
-  const diariosOrdenados = [...diarios].sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+
+  // Deduplicar diários por data para evitar que registros duplicados no banco gerem linhas extras no Excel
+  const diariosUnicosMap = new Map<string, any>();
+  diarios.forEach((d) => {
+    if (!d.data) return;
+    const dateKey = typeof d.data === 'string' ? d.data.substring(0, 10) : new Date(d.data).toISOString().substring(0, 10);
+    const existente = diariosUnicosMap.get(dateKey);
+    // Dá preferência ao diário com mais trechos salvos
+    if (!existente || (d.trechos?.length || 0) > (existente.trechos?.length || 0)) {
+      diariosUnicosMap.set(dateKey, d);
+    }
+  });
+
+  const diariosOrdenados = Array.from(diariosUnicosMap.values()).sort(
+    (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime()
+  );
 
   let odometroAtual = Number(Number(odometroLargada).toFixed(1));
 
@@ -67,8 +82,8 @@ export const gerarPlanilhaReembolso = (diarios: any[], odometroLargada: number) 
 
         odometroAtual = retornoIda;
 
-        // Supervisão/Miolo: Índices 2 até N-2 (se houver, ou seja, N >= 4)
-        if (N >= 4) {
+        // Supervisão/Miolo: Índices 2 até N-2 (se houver, ou seja, N >= 3)
+        if (N >= 3) {
           let kmExatoMiolo = 0;
           for (let j = 2; j <= N - 2; j++) {
             kmExatoMiolo += Number(d.trechos[j].kmTrecho) || 0;
